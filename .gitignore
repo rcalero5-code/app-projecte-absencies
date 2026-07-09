@@ -1,0 +1,12 @@
+# Dependències de Node
+node_modules/
+
+# Fitxers de log
+*.log
+
+# Fitxers del sistema
+.DS_Store
+Thumbs.db
+
+# Configuració local de VS Code (opcional)
+.vscode/
