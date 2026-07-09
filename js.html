@@ -1,5 +1,59 @@
 <script>
 
+    window.onload = function () {
+    carregarAules();
+    }
 
-    
+    function carregarAules() {
+
+    google.script.run
+        .withSuccessHandler(function(aules){
+
+            const select = document.getElementById("aula");
+
+            aules.forEach(aula =>{
+
+                let option = document.createElement("option");
+
+                option.value = aula;
+                option.textContent = aula;
+
+                select.appendChild(option);
+
+            });
+
+        })
+        .obtenirAules();
+
+}
+
+    function crearGraellaAlumnes() {
+
+        let aula = document.getElementById("aula").value;
+
+        google.script.run.withSuccessHandler(
+            function (obj) {
+                let taula = document.createElement('table');
+                let taulaBody = document.createElement('tbody');
+
+                Array.from(obj).forEach(filaActual =>{
+                    let fila = document.createElement('tr');
+                    filaActual.forEach(cellaActual => {
+                        let cella = document.createElement('td');
+                        cella.textContent = cellaActual;
+                        fila.appendChild(cella);
+                    });
+                    taulaBody.appendChild(fila);
+                });
+                // Agregem cos a la taula
+                taula.appendChild(taulaBody);
+                // Agregem estil a la taula
+                taula.classList.add('table','table-striped','table-hover','border','border-3');
+                // Agregem taula a la pàgina
+                document.getElementById('divAlumnes').appendChild(taula);
+
+            }
+        ).obtenirAlumnes(aula);
+    }
+
 </script>

@@ -1,7 +1,26 @@
 <main>
 
-    <button class="btn btn-success m-3">
-        Mostrar alumnes
-    </button>
+    <!-- Botons -->
+
+    
+     <div class="row mb-3">
+
+    <div class="col-md-4">
+        <select id="aula" class="form-select">
+            <option value="">Selecciona una aula...</option>
+        </select>
+    </div>
+
+    <div class="col-md-2">
+        <button class="btn btn-success"
+                onclick="crearGraellaAlumnes()">
+            Mostrar alumnes
+        </button>
+    </div>
+
+</div>
+
+<!-- Graella alumnes -->
+<div id="divAlumnes"></div>
 
 </main>
