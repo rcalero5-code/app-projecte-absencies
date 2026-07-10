@@ -30,23 +30,40 @@
     function crearGraellaAlumnes() {
 
         let aula = document.getElementById("aula").value;
+        document.getElementById("taulaAlumnes")?.remove(); // L'operador ?. elimina la taula només si existeix.
 
         google.script.run.withSuccessHandler(
             function (obj) {
-                let taula = document.createElement('table');
+                
+                taula = document.createElement('table');
+                taula.id = 'taulaAlumnes';
+                
+                let taulaHeader = document.createElement('thead');
                 let taulaBody = document.createElement('tbody');
 
-                Array.from(obj).forEach(filaActual =>{
+                let primeraFila = document.createElement('tr');
+                for (let i = 0; i < obj[0].length; i++) {
+                    let cella = document.createElement('th');
+                    cella.textContent = obj[0][i];
+                    primeraFila.appendChild(cella);
+                }
+                taulaHeader.appendChild(primeraFila);
+                taula.appendChild(taulaHeader);
+
+                for (let i = 1; i < obj.length; i++) {
                     let fila = document.createElement('tr');
-                    filaActual.forEach(cellaActual => {
+                    for (let j = 0; j < obj[i].length; j++) {
                         let cella = document.createElement('td');
-                        cella.textContent = cellaActual;
+                        cella.textContent = obj[i][j];
                         fila.appendChild(cella);
-                    });
+                    }
                     taulaBody.appendChild(fila);
-                });
+                }
+
                 // Agregem cos a la taula
                 taula.appendChild(taulaBody);
+                // Agregem estil al header
+                taulaHeader.classList.add('table','table-info');
                 // Agregem estil a la taula
                 taula.classList.add('table','table-striped','table-hover','border','border-3');
                 // Agregem taula a la pàgina
@@ -55,5 +72,32 @@
             }
         ).obtenirAlumnes(aula);
     }
+
+    function actualitzarRellotge() {
+
+    const ara = new Date();
+
+    const data = ara.toLocaleDateString("ca-ES", {
+        weekday: "long",
+        day: "2-digit",
+        month: "long",
+        year: "numeric"
+    });
+
+    const hora = ara.toLocaleTimeString("ca-ES", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+    });
+
+    document.getElementById("rellotge").textContent =
+        `📅 ${data}   🕒 ${hora}`;
+}
+
+// Actualitza immediatament
+actualitzarRellotge();
+
+// Torna a actualitzar cada segon
+setInterval(actualitzarRellotge, 1000);
 
 </script>
