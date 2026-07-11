@@ -1,8 +1,5 @@
 <script>
-  const NOTIFICACIO_OK = 1;
-  const NOTIFICACIO_DANGER = 2;
-  const NOTIFICACIO_WARNING = 3;
-
+ 
   window.onload = function () {
     carregarAules();
   };
@@ -82,8 +79,7 @@
     document.getElementById("divAlumnes").appendChild(taula);
 
     // Mostrar notificació de ok
-    crearNotificacio(
-      NOTIFICACIO_OK,
+    crearNotificacioOK(
       "mostrat l'alumnat de la classe correctament",
       "Tot en ordre",
     );
@@ -91,56 +87,57 @@
 
   function crearGraellaAlumnesError() {
     // Mostrar notificació de error
-    crearNotificacio(
-        NOTIFICACIO_DANGER,
-        "No s'ha pogut mostrar els alumnes",
+    crearNotificacioError(
+        "No s'han pogut mostrar els alumnes",
         "ERROR"
     );
   }
 
-  function crearNotificacio(tipus, missatge, titol) {
-    // Obtenir dades
-    let missatgeNotificacio = document.getElementById("missatgeNotificacio");
-    let titolNotificacio = document.getElementById("titolNotificacio");
+  function crearNotificacio(missatge,titol) {
+    document.getElementById("missatgeNotificacio").textContent = missatge;
+    document.getElementById("titolNotificacio").textContent = titol;
     let elementNotificacio = document.getElementById("notificacio");
-    let iconaNotificacio = document.getElementById("iconaNotificacio");
-    let notificacio = bootstrap.Toast.getOrCreateInstance(elementNotificacio);
+    bootstrap.Toast.getOrCreateInstance(elementNotificacio).show();
+  }
 
-    // Editar la notificació
-    missatgeNotificacio.textContent = missatge;
-    titolNotificacio.textContent = titol;
+  function crearNotificacioOK(missatge,titol) {
+    crearNotificacio(missatge, titol);
+    crearIconaNotificacioOK();
+    crearColorNotificacio("--color-verd-lima");
+  }
 
-    switch (tipus) {
+  function crearNotificacioError(missatge,titol) {
+    crearNotificacio(missatge, titol);
+    crearIconaNotificacioError();
+    crearColorNotificacio("--color-vermell-bug");
+  }
 
-      case NOTIFICACIO_OK:
-        iconaNotificacio.className = "";
-        iconaNotificacio.classList.add("bi", "bi-check2-circle");
+  function crearNotificacioAdvertencia(missatge,titol) {
+    crearNotificacio(missatge, titol);
+    crearIconaNotificacioAdvertencia();
+    crearColorNotificacio("--color-groc-warning");
+  }
 
-        elementNotificacio.style.backgroundColor = getComputedStyle(
+  function crearIconaNotificacioOK() {
+    document.getElementById("iconaNotificacio").className = "";
+    document.getElementById("iconaNotificacio").classList.add("bi", "bi-check2-circle");
+  }
+
+  function crearIconaNotificacioError() {
+    document.getElementById("iconaNotificacio").className = "";
+    document.getElementById("iconaNotificacio").classList.add("bi", "bi-bug");
+  }
+
+  function crearIconaNotificacioAdvertencia() {
+    document.getElementById("iconaNotificacio").className = "";
+    document.getElementById("iconaNotificacio").classList.add("bi", "bi-exclamation-circle");
+  }
+
+  function crearColorNotificacio(color) {
+    let elementNotificacio = document.getElementById("notificacio");
+    elementNotificacio.style.backgroundColor = getComputedStyle(
           document.documentElement,
-        ).getPropertyValue("--color-verd-lima");
-        break;
-
-        case NOTIFICACIO_DANGER:
-        iconaNotificacio.className = "";
-        iconaNotificacio.classList.add("bi", "bi-bug");
-
-        elementNotificacio.style.backgroundColor = getComputedStyle(
-          document.documentElement,
-        ).getPropertyValue("--color-vermell-bug");
-        break;
-        case NOTIFICACIO_WARNING:
-        iconaNotificacio.className = "";
-        iconaNotificacio.classList.add("bi", "bi-exclamation-circle");
-
-        elementNotificacio.style.backgroundColor = getComputedStyle(
-          document.documentElement,
-        ).getPropertyValue("--color-groc-warning");
-        break;
-    }
-
-    // Mostrar la notificació
-    notificacio.show();
+        ).getPropertyValue(color);
   }
 
   function actualitzarRellotge() {
