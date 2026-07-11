@@ -1,131 +1,170 @@
 <script>
+  const NOTIFICACIO_OK = 1;
+  const NOTIFICACIO_DANGER = 2;
+  const NOTIFICACIO_WARNING = 3;
 
-    window.onload = function () {
+  window.onload = function () {
     carregarAules();
-    }
+  };
 
-    function carregarAules() {
+  function carregarAules() {
+    google.script.run
+      .withSuccessHandler(function (aules) {
+        const select = document.getElementById("aula");
+
+        aules.forEach((aula) => {
+          let option = document.createElement("option");
+
+          option.value = aula;
+          option.textContent = aula;
+
+          select.appendChild(option);
+        });
+      })
+      .obtenirAules();
+  }
+
+  function crearGraellaAlumnes() {
+    let aula = document.getElementById("aula").value;
+    document.getElementById("taulaAlumnes")?.remove(); // L'operador ?. elimina la taula només si existeix.
 
     google.script.run
-        .withSuccessHandler(function(aules){
+      .withSuccessHandler(crearGraellaAlumnesCorrectament)
+      .withFailureHandler(crearGraellaAlumnesError)
+      .obtenirAlumnes(aula);
+  }
 
-            const select = document.getElementById("aula");
+  function crearGraellaAlumnesCorrectament(obj) {
+    taula = document.createElement("table");
+    taula.id = "taulaAlumnes";
 
-            aules.forEach(aula =>{
+    let taulaHeader = document.createElement("thead");
+    let taulaBody = document.createElement("tbody");
 
-                let option = document.createElement("option");
+    let primeraFila = document.createElement("tr");
+    for (let i = 0; i < obj[0].length; i++) {
+      let cella = document.createElement("th");
+      cella.textContent = obj[0][i];
+      primeraFila.appendChild(cella);
+    }
+    taulaHeader.appendChild(primeraFila);
+    taula.appendChild(taulaHeader);
 
-                option.value = aula;
-                option.textContent = aula;
-
-                select.appendChild(option);
-
-            });
-
-        })
-        .obtenirAules();
-
-}
-
-    function crearGraellaAlumnes() {
-
-        let aula = document.getElementById("aula").value;
-        document.getElementById("taulaAlumnes")?.remove(); // L'operador ?. elimina la taula només si existeix.
-
-        google.script.run.withSuccessHandler(crearGraellaAlumnesCorrectament)
-        .withFailureHandler(crearGraellaAlumnesError)
-        .obtenirAlumnes(aula);
+    for (let i = 1; i < obj.length; i++) {
+      let fila = document.createElement("tr");
+      for (let j = 0; j < obj[i].length; j++) {
+        let cella = document.createElement("td");
+        cella.textContent = obj[i][j];
+        fila.appendChild(cella);
+      }
+      taulaBody.appendChild(fila);
     }
 
-    function crearGraellaAlumnesCorrectament(obj) {
-                
-                taula = document.createElement('table');
-                taula.id = 'taulaAlumnes';
-                
-                let taulaHeader = document.createElement('thead');
-                let taulaBody = document.createElement('tbody');
+    // Agregem cos a la taula
+    taula.appendChild(taulaBody);
+    // Agregem estil al header
+    taulaHeader.classList.add(
+      "table",
+      "table-info",
+      "border-dark",
+      "border-4"
+    );
+    // Agregem estil a la taula
+    taula.classList.add(
+      "table",
+      "table-striped",
+      "table-hover",
+      "border",
+      "border-dark",
+      "border-4"
+    );
+    // Agregem taula a la pàgina
+    document.getElementById("divAlumnes").appendChild(taula);
 
-                let primeraFila = document.createElement('tr');
-                for (let i = 0; i < obj[0].length; i++) {
-                    let cella = document.createElement('th');
-                    cella.textContent = obj[0][i];
-                    primeraFila.appendChild(cella);
-                }
-                taulaHeader.appendChild(primeraFila);
-                taula.appendChild(taulaHeader);
+    // Mostrar notificació de ok
+    crearNotificacio(
+      NOTIFICACIO_OK,
+      "mostrat l'alumnat de la classe correctament",
+      "Tot en ordre",
+    );
+  }
 
-                for (let i = 1; i < obj.length; i++) {
-                    let fila = document.createElement('tr');
-                    for (let j = 0; j < obj[i].length; j++) {
-                        let cella = document.createElement('td');
-                        cella.textContent = obj[i][j];
-                        fila.appendChild(cella);
-                    }
-                    taulaBody.appendChild(fila);
-                }
+  function crearGraellaAlumnesError() {
+    // Mostrar notificació de error
+    crearNotificacio(
+        NOTIFICACIO_DANGER,
+        "No s'ha pogut mostrar els alumnes",
+        "ERROR"
+    );
+  }
 
-                // Agregem cos a la taula
-                taula.appendChild(taulaBody);
-                // Agregem estil al header
-                taulaHeader.classList.add('table','table-info');
-                // Agregem estil a la taula
-                taula.classList.add('table','table-striped','table-hover','border','border-3');
-                // Agregem taula a la pàgina
-                document.getElementById('divAlumnes').appendChild(taula);
+  function crearNotificacio(tipus, missatge, titol) {
+    // Obtenir dades
+    let missatgeNotificacio = document.getElementById("missatgeNotificacio");
+    let titolNotificacio = document.getElementById("titolNotificacio");
+    let elementNotificacio = document.getElementById("notificacio");
+    let iconaNotificacio = document.getElementById("iconaNotificacio");
+    let notificacio = bootstrap.Toast.getOrCreateInstance(elementNotificacio);
 
-                // Mostrar notificació de ok
-                crearNotificacio(1,"mostrar l'alumnat de la classe correctament","Tot en ordre");
-            }
+    // Editar la notificació
+    missatgeNotificacio.textContent = missatge;
+    titolNotificacio.textContent = titol;
 
-    function crearGraellaAlumnesError() {
-        // Mostrar notificació de error
-        crearNotificacio(1,"No s'ha pogut mostrar els alumnes","ERROR");
+    switch (tipus) {
+
+      case NOTIFICACIO_OK:
+        iconaNotificacio.className = "";
+        iconaNotificacio.classList.add("bi", "bi-check2-circle");
+
+        elementNotificacio.style.backgroundColor = getComputedStyle(
+          document.documentElement,
+        ).getPropertyValue("--color-verd-lima");
+        break;
+
+        case NOTIFICACIO_DANGER:
+        iconaNotificacio.className = "";
+        iconaNotificacio.classList.add("bi", "bi-bug");
+
+        elementNotificacio.style.backgroundColor = getComputedStyle(
+          document.documentElement,
+        ).getPropertyValue("--color-vermell-bug");
+        break;
+        case NOTIFICACIO_WARNING:
+        iconaNotificacio.className = "";
+        iconaNotificacio.classList.add("bi", "bi-exclamation-circle");
+
+        elementNotificacio.style.backgroundColor = getComputedStyle(
+          document.documentElement,
+        ).getPropertyValue("--color-groc-warning");
+        break;
     }
 
-    function crearNotificacio(tipus,missatge,titol) {
-        // Obtenir dades
-        let missatgeNotificacio = document.getElementById('missatgeNotificacio');
-        let titolNotificacio = document.getElementById('titolNotificacio');
-        let elementNotificacio = document.getElementById('notificacio');
-        let iconaNotificacio = document.getElementById('iconaNotificacio');
-        let notificacio = bootstrap.Toast.getOrCreateInstance(elementNotificacio);
+    // Mostrar la notificació
+    notificacio.show();
+  }
 
-        // Editar la notificació
-        iconaNotificacio.className = '';
-        iconaNotificacio.classList.add('bi','bi-check2-circle');
-        missatgeNotificacio.textContent = missatge;
-        titolNotificacio.textContent = titol;
-        elementNotificacio.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--color-verd-lima');
-
-        // Mostrar la notificació
-        notificacio.show();
-    }
-
-    function actualitzarRellotge() {
-
+  function actualitzarRellotge() {
     const ara = new Date();
 
     const data = ara.toLocaleDateString("ca-ES", {
-        weekday: "long",
-        day: "2-digit",
-        month: "long",
-        year: "numeric"
+      weekday: "long",
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
     });
 
     const hora = ara.toLocaleTimeString("ca-ES", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit"
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
     });
 
-    document.getElementById("rellotge").textContent =
-        `📅 ${data}   🕒 ${hora}`;
-}
+    document.getElementById("rellotge").textContent = `📅 ${data}   🕒 ${hora}`;
+  }
 
-// Actualitza immediatament
-actualitzarRellotge();
+  // Actualitza immediatament
+  actualitzarRellotge();
 
-// Torna a actualitzar cada segon
-setInterval(actualitzarRellotge, 1000);
-
+  // Torna a actualitzar cada segon
+  setInterval(actualitzarRellotge, 1000);
 </script>
