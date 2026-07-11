@@ -15,5 +15,5 @@ function obtenirAlumnes(aula) {
 }
 
 function obtenirAules() {
-  return full.getSheets().map(f => f.getName());
+    return full.getSheets().map(f => f.getName());
 }

@@ -32,8 +32,12 @@
         let aula = document.getElementById("aula").value;
         document.getElementById("taulaAlumnes")?.remove(); // L'operador ?. elimina la taula només si existeix.
 
-        google.script.run.withSuccessHandler(
-            function (obj) {
+        google.script.run.withSuccessHandler(crearGraellaAlumnesCorrectament)
+        .withFailureHandler(crearGraellaAlumnesError)
+        .obtenirAlumnes(aula);
+    }
+
+    function crearGraellaAlumnesCorrectament(obj) {
                 
                 taula = document.createElement('table');
                 taula.id = 'taulaAlumnes';
@@ -69,8 +73,32 @@
                 // Agregem taula a la pàgina
                 document.getElementById('divAlumnes').appendChild(taula);
 
+                // Mostrar notificació de ok
+                crearNotificacio(1,"mostrar l'alumnat de la classe correctament","Tot en ordre");
             }
-        ).obtenirAlumnes(aula);
+
+    function crearGraellaAlumnesError() {
+        // Mostrar notificació de error
+        crearNotificacio(1,"No s'ha pogut mostrar els alumnes","ERROR");
+    }
+
+    function crearNotificacio(tipus,missatge,titol) {
+        // Obtenir dades
+        let missatgeNotificacio = document.getElementById('missatgeNotificacio');
+        let titolNotificacio = document.getElementById('titolNotificacio');
+        let elementNotificacio = document.getElementById('notificacio');
+        let iconaNotificacio = document.getElementById('iconaNotificacio');
+        let notificacio = bootstrap.Toast.getOrCreateInstance(elementNotificacio);
+
+        // Editar la notificació
+        iconaNotificacio.className = '';
+        iconaNotificacio.classList.add('bi','bi-check2-circle');
+        missatgeNotificacio.textContent = missatge;
+        titolNotificacio.textContent = titol;
+        elementNotificacio.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--color-verd-lima');
+
+        // Mostrar la notificació
+        notificacio.show();
     }
 
     function actualitzarRellotge() {
