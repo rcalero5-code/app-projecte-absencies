@@ -23,8 +23,12 @@
 
   function crearGraellaAlumnes() {
     let aula = document.getElementById("aula").value;
-    document.getElementById("taulaAlumnes")?.remove(); // L'operador ?. elimina la taula només si existeix.
+    
+    // Eliminar taula
+    eliminarGraella();
 
+    // Crear loader
+    crearLoaderAnell('divAlumnes');
     google.script.run
       .withSuccessHandler(crearGraellaAlumnesCorrectament)
       .withFailureHandler(crearGraellaAlumnesError)
@@ -83,14 +87,21 @@
       "mostrat l'alumnat de la classe correctament",
       "Tot en ordre",
     );
+
+    // Eliminem el loader
+    eliminarLoader();
   }
 
   function crearGraellaAlumnesError() {
+    //crear Loader
+    crearLoaderAnell();
     // Mostrar notificació de error
     crearNotificacioError(
         "No s'han pogut mostrar els alumnes",
         "ERROR"
     );
+    // Eliminem el loader
+    eliminarLoader();
   }
 
   function crearNotificacio(missatge,titol) {
@@ -138,6 +149,36 @@
     elementNotificacio.style.backgroundColor = getComputedStyle(
           document.documentElement,
         ).getPropertyValue(color);
+  }
+
+  function crearLoader(elementPare) {
+    eliminarLoader();
+    let loader = document.createElement('div');
+    loader.id = 'loader';
+    loader.appendChild(document.createElement('div'));
+    loader.appendChild(document.createElement('div'));
+    loader.appendChild(document.createElement('div'));
+    loader.appendChild(document.createElement('div'));
+    return document.getElementById(elementPare).appendChild(loader);
+  }
+
+  function crearLoaderPunts(elementPare) {
+    let loader = crearLoader(elementPare);
+    loader.classList.add('lds-ellipsis');
+  }
+
+  function crearLoaderAnell(elementPare) {
+    let loader = crearLoader(elementPare);
+    loader.classList.add('lds-dual-ring');
+  }
+
+  function eliminarLoader() {
+    let loader = document.getElementById('loader');
+    if(loader) loader.remove();
+  }
+
+  function eliminarGraella() {
+    document.getElementById("taulaAlumnes")?.remove(); // L'operador ?. elimina la taula només si existeix.
   }
 
   function actualitzarRellotge() {
