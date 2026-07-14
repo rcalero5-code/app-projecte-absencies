@@ -31,7 +31,7 @@
     --color-verd-lima: #32CD32;
     --color-groc-warning: #F59622;
     --color-vermell-bug: #AA0000;
-    --color-blau-verdos: #1f3438;
+    --color-blau-verdos: #0f9dba;
 }
 
   header {
@@ -50,6 +50,40 @@
     color: var(--color-magenta-rosa) !important;
     transform: scale(2);
   }
+
+  td{
+    position:relative;
+}
+
+.barra-contenidor {
+
+    position:absolute;
+
+    left:0;
+    right:0;
+
+    bottom:0;
+
+    height:7px;
+
+    background:#efefef;
+
+    border-radius:8px;
+
+    overflow:hidden;
+}
+
+.barra-progres {
+
+    height:100%;
+    width:0%;
+
+    border-radius:8px;
+
+    transition:
+        width .4s ease,
+        background-color .3s ease;
+}
 
   .icona-notificacio {
     font-size: 1.5rem;

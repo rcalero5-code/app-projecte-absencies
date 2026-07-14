@@ -1,5 +1,38 @@
 <script>
- 
+  let alumnes = [];
+
+  const FRANGES_HORARIES = [
+    {
+      inici: "08:15",
+      final: "09:15",
+    },
+
+    {
+      inici: "09:15",
+      final: "10:10",
+    },
+
+    {
+      inici: "10:35",
+      final: "11:35",
+    },
+
+    {
+      inici: "11:35",
+      final: "12:35",
+    },
+
+    {
+      inici: "12:35",
+      final: "13:35",
+    },
+
+    {
+      inici: "13:35",
+      final: "14:35",
+    },
+  ];
+
   window.onload = function () {
     carregarAules();
   };
@@ -18,17 +51,18 @@
           select.appendChild(option);
         });
       })
+      .withFailureHandler(crearGraellaAlumnesError)
       .obtenirAules();
   }
 
   function crearGraellaAlumnes() {
     let aula = document.getElementById("aula").value;
-    
+
     // Eliminar taula
     eliminarGraella();
 
     // Crear loader
-    crearLoaderAnell('divAlumnes');
+    crearLoaderAnell("divAlumnes");
     google.script.run
       .withSuccessHandler(crearGraellaAlumnesCorrectament)
       .withFailureHandler(crearGraellaAlumnesError)
@@ -43,33 +77,62 @@
     let taulaBody = document.createElement("tbody");
 
     let primeraFila = document.createElement("tr");
-    for (let i = 0; i < obj[0].length; i++) {
-      let cella = document.createElement("th");
-      cella.textContent = obj[0][i];
+
+    // Primera columna
+    let cella = document.createElement("th");
+    cella.textContent = "Alumne";
+    primeraFila.appendChild(cella);
+
+    // Franges horàries
+    FRANGES_HORARIES.forEach((hora) => {
+      cella = document.createElement("th");
+      cella.textContent = `${hora.inici}-${hora.final}`;
       primeraFila.appendChild(cella);
-    }
+    });
+
     taulaHeader.appendChild(primeraFila);
     taula.appendChild(taulaHeader);
 
+    alumnes = [];
+
+    // Primera columna: Cognoms + Nom
     for (let i = 1; i < obj.length; i++) {
+      alumnes.push({
+        aula: document.getElementById("aula").value,
+        fila: i,
+        absent: false,
+        horaInici: null,
+        horaArribada: null,
+        justificat: false,
+      });
+
       let fila = document.createElement("tr");
-      for (let j = 0; j < obj[i].length; j++) {
-        let cella = document.createElement("td");
-        cella.textContent = obj[i][j];
+
+      // Primera columna: Cognoms + Nom
+      let cella = document.createElement("td");
+      cella.textContent = `${obj[i][0]} ${obj[i][1]}, ${obj[i][2]}`;
+      fila.appendChild(cella);
+
+      FRANGES_HORARIES.forEach((franja, index) => {
+        const cella = document.createElement("td");
+
+        cella.dataset.alumne = obj[i][0] + "|" + obj[i][1] + "|" + obj[i][2];
+        cella.dataset.fila = i;
+        cella.dataset.aula = document.getElementById("aula").value;
+        cella.dataset.franja = index;
+
+        cella.addEventListener("click", clicarFranja);
+
         fila.appendChild(cella);
-      }
+      });
+
       taulaBody.appendChild(fila);
     }
 
     // Agregem cos a la taula
     taula.appendChild(taulaBody);
     // Agregem estil al header
-    taulaHeader.classList.add(
-      "table",
-      "table-info",
-      "border-dark",
-      "border-4"
-    );
+    taulaHeader.classList.add("table", "table-info", "border-dark", "border-4");
     // Agregem estil a la taula
     taula.classList.add(
       "table",
@@ -77,7 +140,7 @@
       "table-hover",
       "border",
       "border-dark",
-      "border-4"
+      "border-4",
     );
     // Agregem taula a la pàgina
     document.getElementById("divAlumnes").appendChild(taula);
@@ -90,40 +153,188 @@
 
     // Eliminem el loader
     eliminarLoader();
+
+    // Actualitzar la taula cada minut
+    iniciarActualitzacioBarres();
   }
 
   function crearGraellaAlumnesError() {
     //crear Loader
     crearLoaderAnell();
     // Mostrar notificació de error
-    crearNotificacioError(
-        "No s'han pogut mostrar els alumnes",
-        "ERROR"
-    );
+    crearNotificacioError("No s'han pogut mostrar els alumnes", "ERROR");
     // Eliminem el loader
     eliminarLoader();
   }
 
-  function crearNotificacio(missatge,titol) {
+  function clicarFranja(e) {
+    const cella = e.currentTarget;
+    const alumne = alumnes.find(
+      (a) => a.aula === cella.dataset.aula && a.fila == cella.dataset.fila,
+    );
+
+    iniciarAbsencia(alumne);
+
+    renderitzarAlumne(alumne);
+  }
+
+  function iniciarAbsencia(aula, fila) {
+    const alumne = alumnes.find((a) => a.aula === aula && a.fila === fila);
+
+    if (!alumne || alumne.absent) return;
+
+    alumne.absent = true;
+    alumne.horaInici = new Date();
+  }
+
+  function crearBarraProgres(cella) {
+    const contenidor = document.createElement("div");
+    contenidor.className = "barra-contenidor";
+
+    const barra = document.createElement("div");
+    barra.className = "barra-progres";
+
+    contenidor.appendChild(barra);
+
+    cella.appendChild(contenidor);
+
+    return barra;
+  }
+
+  function renderitzarAlumne(alumne) {
+    const cella = document.querySelector(
+      `td[data-aula="${alumne.aula}"][data-fila="${alumne.fila}"]`,
+    );
+
+    const percentatge = alumne.horaArribada
+      ? calcularPercentatge(alumne.horaArribada)
+      : calcularPercentatgeActual();
+
+    pintarBarra(cella, percentatge);
+  }
+
+  function calcularPercentatge(horaArribada) {
+    const inici = 8 * 60 + 15;
+    const final = 14 * 60 + 35;
+
+    const [hores, minuts] = horaArribada.split(":").map(Number);
+
+    const arribada = hores * 60 + minuts;
+
+    const minutsAbsencia = arribada - inici;
+
+    const percentatge = Math.max(
+      0,
+      Math.min(100, (minutsAbsencia / (final - inici)) * 100),
+    );
+
+    return percentatge;
+  }
+
+  function calcularPercentatgeActual() {
+    const ara = new Date();
+
+    const minutsActuals = ara.getHours() * 60 + ara.getMinutes();
+
+    const inici = 8 * 60 + 15;
+    const final = 14 * 60 + 15;
+
+    return Math.max(
+      0,
+      Math.min(100, ((minutsActuals - inici) / (final - inici)) * 100),
+    );
+  }
+
+  let intervalBarra = null;
+
+  function iniciarActualitzacioBarres() {
+    if (intervalBarra) {
+      clearInterval(intervalBarra);
+    }
+
+    actualitzarTotsElsAlumnes();
+
+    intervalBarra = setInterval(actualitzarTotsElsAlumnes, 60000);
+  }
+
+  function actualitzarTotsElsAlumnes() {
+    document.querySelectorAll(".barra-progres").forEach((barra) => {
+      if (barra.dataset.arribat) return;
+
+      const percentatge = calcularPercentatgeActual();
+
+      barra.style.width = percentatge + "%";
+      barra.style.backgroundColor = obtenirColorBarra(percentatge);
+    });
+  }
+
+  function pintarBarra(cella, percentatge) {
+    const barra = crearBarraSiNoExisteix(cella);
+
+    barra.style.width = percentatge + "%";
+    barra.style.backgroundColor = obtenirColorBarra(percentatge);
+  }
+
+  function crearBarraSiNoExisteix(cella) {
+    // Ja existeix?
+    let barra = cella.querySelector(".barra-progres");
+
+    if (barra) {
+      return barra;
+    }
+
+    // Crear contenidor
+    const contenidor = document.createElement("div");
+    contenidor.classList.add("barra-contenidor");
+
+    // Crear barra
+    barra = document.createElement("div");
+    barra.classList.add("barra-progres");
+
+    contenidor.appendChild(barra);
+    cella.appendChild(contenidor);
+
+    return barra;
+  }
+
+  function obtenirColorCSS(variableCSS) {
+    return getComputedStyle(document.documentElement)
+      .getPropertyValue(variableCSS)
+      .trim();
+  }
+
+  function obtenirColorBarra(percentatge) {
+    if (percentatge < 33) {
+      return obtenirColorCSS("--color-verd-lima");
+    }
+
+    if (percentatge < 66) {
+      return obtenirColorCSS("--color-groc-warning");
+    }
+
+    return obtenirColorCSS("--color-vermell-bug");
+  }
+
+  function crearNotificacio(missatge, titol) {
     document.getElementById("missatgeNotificacio").textContent = missatge;
     document.getElementById("titolNotificacio").textContent = titol;
     let elementNotificacio = document.getElementById("notificacio");
     bootstrap.Toast.getOrCreateInstance(elementNotificacio).show();
   }
 
-  function crearNotificacioOK(missatge,titol) {
+  function crearNotificacioOK(missatge, titol) {
     crearNotificacio(missatge, titol);
     crearIconaNotificacioOK();
     crearColorNotificacio("--color-verd-lima");
   }
 
-  function crearNotificacioError(missatge,titol) {
+  function crearNotificacioError(missatge, titol) {
     crearNotificacio(missatge, titol);
     crearIconaNotificacioError();
     crearColorNotificacio("--color-vermell-bug");
   }
 
-  function crearNotificacioAdvertencia(missatge,titol) {
+  function crearNotificacioAdvertencia(missatge, titol) {
     crearNotificacio(missatge, titol);
     crearIconaNotificacioAdvertencia();
     crearColorNotificacio("--color-groc-warning");
@@ -131,7 +342,9 @@
 
   function crearIconaNotificacioOK() {
     document.getElementById("iconaNotificacio").className = "";
-    document.getElementById("iconaNotificacio").classList.add("bi", "bi-check2-circle");
+    document
+      .getElementById("iconaNotificacio")
+      .classList.add("bi", "bi-check2-circle");
   }
 
   function crearIconaNotificacioError() {
@@ -141,40 +354,41 @@
 
   function crearIconaNotificacioAdvertencia() {
     document.getElementById("iconaNotificacio").className = "";
-    document.getElementById("iconaNotificacio").classList.add("bi", "bi-exclamation-circle");
+    document
+      .getElementById("iconaNotificacio")
+      .classList.add("bi", "bi-exclamation-circle");
   }
 
   function crearColorNotificacio(color) {
     let elementNotificacio = document.getElementById("notificacio");
     elementNotificacio.style.backgroundColor = getComputedStyle(
-          document.documentElement,
-        ).getPropertyValue(color);
+      document.documentElement,
+    ).getPropertyValue(color);
   }
 
   function crearLoader(elementPare) {
     eliminarLoader();
-    let loader = document.createElement('div');
-    loader.id = 'loader';
-    loader.appendChild(document.createElement('div'));
-    loader.appendChild(document.createElement('div'));
-    loader.appendChild(document.createElement('div'));
-    loader.appendChild(document.createElement('div'));
+    let loader = document.createElement("div");
+    loader.id = "loader";
+    loader.appendChild(document.createElement("div"));
+    loader.appendChild(document.createElement("div"));
+    loader.appendChild(document.createElement("div"));
+    loader.appendChild(document.createElement("div"));
     return document.getElementById(elementPare).appendChild(loader);
   }
 
   function crearLoaderPunts(elementPare) {
     let loader = crearLoader(elementPare);
-    loader.classList.add('lds-ellipsis');
+    loader.classList.add("lds-ellipsis");
   }
 
   function crearLoaderAnell(elementPare) {
     let loader = crearLoader(elementPare);
-    loader.classList.add('lds-dual-ring');
+    loader.classList.add("lds-dual-ring");
   }
 
   function eliminarLoader() {
-    let loader = document.getElementById('loader');
-    if(loader) loader.remove();
+    document.getElementById("loader")?.remove(); // L'operador ?. elimina el loader només si existeix.
   }
 
   function eliminarGraella() {
