@@ -127,6 +127,27 @@
       });
 
       taulaBody.appendChild(fila);
+
+      // Fila de la barra
+const filaBarra = document.createElement("tr");
+
+const tdBuida = document.createElement("td");
+tdBuida.textContent = "";
+filaBarra.appendChild(tdBuida);
+
+// Cel·la que ocupa totes les franges
+const tdBarra = document.createElement("td");
+tdBarra.colSpan = FRANGES_HORARIES.length;
+tdBarra.classList.add("td-barra");
+
+// Ens servirà per localitzar-la després
+tdBarra.dataset.aula = document.getElementById("aula").value;
+tdBarra.dataset.fila = i;
+
+filaBarra.appendChild(tdBarra);
+
+taulaBody.appendChild(filaBarra);
+
     }
 
     // Agregem cos a la taula
@@ -201,17 +222,15 @@
     return barra;
   }
 
-  function renderitzarAlumne(alumne) {
-    const cella = document.querySelector(
-      `td[data-aula="${alumne.aula}"][data-fila="${alumne.fila}"]`,
-    );
+  function renderitzarAlumne(alumne){
 
     const percentatge = alumne.horaArribada
-      ? calcularPercentatge(alumne.horaArribada)
-      : calcularPercentatgeActual();
+        ? calcularPercentatge(alumne.horaArribada)
+        : calcularPercentatgeActual();
 
-    pintarBarra(cella, percentatge);
-  }
+    pintarBarra(alumne, percentatge);
+
+}
 
   function calcularPercentatge(horaArribada) {
     const inici = 8 * 60 + 15;
@@ -268,34 +287,41 @@
     });
   }
 
-  function pintarBarra(cella, percentatge) {
-    const barra = crearBarraSiNoExisteix(cella);
+  function pintarBarra(alumne, percentatge){
+
+    const barra = crearBarraSiNoExisteix(alumne);
 
     barra.style.width = percentatge + "%";
     barra.style.backgroundColor = obtenirColorBarra(percentatge);
-  }
 
-  function crearBarraSiNoExisteix(cella) {
-    // Ja existeix?
-    let barra = cella.querySelector(".barra-progres");
+}
 
-    if (barra) {
-      return barra;
+  function crearBarraSiNoExisteix(alumne){
+
+    const tdBarra = document.querySelector(
+
+        `.td-barra[data-aula="${alumne.aula}"][data-fila="${alumne.fila}"]`
+
+    );
+
+    let barra = tdBarra.querySelector(".barra-progres");
+
+    if(barra){
+        return barra;
     }
 
-    // Crear contenidor
     const contenidor = document.createElement("div");
-    contenidor.classList.add("barra-contenidor");
+    contenidor.className = "barra-contenidor";
 
-    // Crear barra
     barra = document.createElement("div");
-    barra.classList.add("barra-progres");
+    barra.className = "barra-progres";
 
     contenidor.appendChild(barra);
-    cella.appendChild(contenidor);
+
+    tdBarra.appendChild(contenidor);
 
     return barra;
-  }
+}
 
   function obtenirColorCSS(variableCSS) {
     return getComputedStyle(document.documentElement)
