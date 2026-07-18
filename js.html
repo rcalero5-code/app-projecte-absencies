@@ -98,13 +98,19 @@
     // Primera columna: Cognoms + Nom
     for (let i = 1; i < obj.length; i++) {
       alumnes.push({
+        cognom: obj[i][0],
+        segonCognom: obj[i][1],
+        nom: obj[i][2],
         aula: document.getElementById("aula").value,
         fila: i,
         absent: false,
         horaInici: null,
         horaArribada: null,
         justificat: false,
+        telefon1: obj[i][3],
+        telefon2: obj[i][4]
       });
+      
 
       let fila = document.createElement("tr");
 
@@ -122,32 +128,31 @@
         cella.dataset.franja = index;
 
         cella.addEventListener("click", clicarFranja);
-
         fila.appendChild(cella);
+        
       });
 
       taulaBody.appendChild(fila);
 
       // Fila de la barra
-const filaBarra = document.createElement("tr");
+      const filaBarra = document.createElement("tr");
 
-const tdBuida = document.createElement("td");
-tdBuida.textContent = "";
-filaBarra.appendChild(tdBuida);
+      const tdBuida = document.createElement("td");
+      tdBuida.textContent = "";
+      filaBarra.appendChild(tdBuida);
 
-// Cel·la que ocupa totes les franges
-const tdBarra = document.createElement("td");
-tdBarra.colSpan = FRANGES_HORARIES.length;
-tdBarra.classList.add("td-barra");
+      // Cel·la que ocupa totes les franges
+      const tdBarra = document.createElement("td");
+      tdBarra.colSpan = FRANGES_HORARIES.length;
+      tdBarra.classList.add("td-barra");
 
-// Ens servirà per localitzar-la després
-tdBarra.dataset.aula = document.getElementById("aula").value;
-tdBarra.dataset.fila = i;
+      // Ens servirà per localitzar-la després
+      tdBarra.dataset.aula = document.getElementById("aula").value;
+      tdBarra.dataset.fila = i;
 
-filaBarra.appendChild(tdBarra);
+      filaBarra.appendChild(tdBarra);
 
-taulaBody.appendChild(filaBarra);
-
+      taulaBody.appendChild(filaBarra);
     }
 
     // Agregem cos a la taula
@@ -177,6 +182,16 @@ taulaBody.appendChild(filaBarra);
 
     // Actualitzar la taula cada minut
     iniciarActualitzacioBarres();
+
+    const boto = document.createElement("button");
+
+boto.id = "btnEnviarAbsencies";
+boto.textContent = "Enviar absències";
+boto.classList.add("btn", "btn-success", "mt-3");
+
+boto.addEventListener("click", enviarAbsenciesSeleccionades);
+
+document.getElementById("divAlumnes").appendChild(boto);
   }
 
   function crearGraellaAlumnesError() {
@@ -189,13 +204,14 @@ taulaBody.appendChild(filaBarra);
   }
 
   function clicarFranja(e) {
-    const cella = e.currentTarget;
-    const alumne = alumnes.find(
-      (a) => a.aula === cella.dataset.aula && a.fila == cella.dataset.fila,
-    );
+    const fila = Number(e.currentTarget.dataset.fila);
+
+    const alumne = alumnes.find(a => a.fila === fila);
+
+    alumne.absent = !alumne.absent;
 
     iniciarAbsencia(alumne);
-
+    
     renderitzarAlumne(alumne);
   }
 
@@ -206,6 +222,7 @@ taulaBody.appendChild(filaBarra);
 
     alumne.absent = true;
     alumne.horaInici = new Date();
+
   }
 
   function crearBarraProgres(cella) {
@@ -222,15 +239,13 @@ taulaBody.appendChild(filaBarra);
     return barra;
   }
 
-  function renderitzarAlumne(alumne){
-
+  function renderitzarAlumne(alumne) {
     const percentatge = alumne.horaArribada
-        ? calcularPercentatge(alumne.horaArribada)
-        : calcularPercentatgeActual();
+      ? calcularPercentatge(alumne.horaArribada)
+      : calcularPercentatgeActual();
 
     pintarBarra(alumne, percentatge);
-
-}
+  }
 
   function calcularPercentatge(horaArribada) {
     const inici = 8 * 60 + 15;
@@ -287,27 +302,22 @@ taulaBody.appendChild(filaBarra);
     });
   }
 
-  function pintarBarra(alumne, percentatge){
-
+  function pintarBarra(alumne, percentatge) {
     const barra = crearBarraSiNoExisteix(alumne);
 
     barra.style.width = percentatge + "%";
     barra.style.backgroundColor = obtenirColorBarra(percentatge);
+  }
 
-}
-
-  function crearBarraSiNoExisteix(alumne){
-
+  function crearBarraSiNoExisteix(alumne) {
     const tdBarra = document.querySelector(
-
-        `.td-barra[data-aula="${alumne.aula}"][data-fila="${alumne.fila}"]`
-
+      `.td-barra[data-aula="${alumne.aula}"][data-fila="${alumne.fila}"]`,
     );
 
     let barra = tdBarra.querySelector(".barra-progres");
 
-    if(barra){
-        return barra;
+    if (barra) {
+      return barra;
     }
 
     const contenidor = document.createElement("div");
@@ -321,6 +331,34 @@ taulaBody.appendChild(filaBarra);
     tdBarra.appendChild(contenidor);
 
     return barra;
+  }
+
+  function enviarAbsenciesSeleccionades() {
+
+  const dades = alumnes.filter(alumne => alumne.absent);
+
+  if (dades.length === 0) {
+    crearNotificacioError(
+      "No hi ha cap alumne seleccionat.",
+      "Sense absències"
+    );
+    return;
+  }
+
+  google.script.run
+    .withSuccessHandler(() => {
+      crearNotificacioOK(
+        "Absències enviades correctament.",
+        "Tot correcte"
+      );
+    })
+    .withFailureHandler(error => {
+      crearNotificacioError(
+        error.message,
+        "Error"
+      );
+    })
+    .enviarAbsencies(dades);
 }
 
   function obtenirColorCSS(variableCSS) {
@@ -340,6 +378,38 @@ taulaBody.appendChild(filaBarra);
 
     return obtenirColorCSS("--color-vermell-bug");
   }
+
+  function enviarAbsenciesSeleccionades() {
+
+  const absencies = alumnes.filter(alumne => alumne.absent);
+
+  if (absencies.length === 0) {
+    crearNotificacioError(
+      "No hi ha cap alumne seleccionat.",
+      "Sense absències"
+    );
+    return;
+  }
+
+  google.script.run
+    .withSuccessHandler(() => {
+
+      crearNotificacioOK(
+        `${absencies.length} absència/es enviada/es correctament.`,
+        "Procés finalitzat"
+      );
+
+    })
+    .withFailureHandler(error => {
+
+      crearNotificacioError(
+        error.message,
+        "Error enviant les absències"
+      );
+
+    })
+    .enviarAbsencies(absencies);
+}
 
   function crearNotificacio(missatge, titol) {
     document.getElementById("missatgeNotificacio").textContent = missatge;
