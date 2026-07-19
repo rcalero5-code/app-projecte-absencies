@@ -1,5 +1,8 @@
 <script>
   let alumnes = [];
+  let agullaHora;
+  let agullaMinuts;
+  let agullaSegons;
 
   const FRANGES_HORARIES = [
     {
@@ -108,16 +111,23 @@
         horaArribada: null,
         justificat: false,
         telefon1: obj[i][3],
-        telefon2: obj[i][4]
+        telefon2: obj[i][4],
       });
-      
 
       let fila = document.createElement("tr");
 
       // Primera columna: Cognoms + Nom
-      let cella = document.createElement("td");
-      cella.textContent = `${obj[i][0]} ${obj[i][1]}, ${obj[i][2]}`;
-      fila.appendChild(cella);
+      const cellaNom = document.createElement("td");
+
+      cellaNom.textContent = `${obj[i][0]} ${obj[i][1]}, ${obj[i][2]}`;
+
+      cellaNom.dataset.alumne = obj[i][0] + "|" + obj[i][1] + "|" + obj[i][2];
+      cellaNom.dataset.fila = i;
+      cellaNom.dataset.aula = document.getElementById("aula").value;
+
+      cellaNom.addEventListener("click", clicarFranja);
+
+      fila.appendChild(cellaNom);
 
       FRANGES_HORARIES.forEach((franja, index) => {
         const cella = document.createElement("td");
@@ -129,7 +139,6 @@
 
         cella.addEventListener("click", clicarFranja);
         fila.appendChild(cella);
-        
       });
 
       taulaBody.appendChild(fila);
@@ -185,13 +194,13 @@
 
     const boto = document.createElement("button");
 
-boto.id = "btnEnviarAbsencies";
-boto.textContent = "Enviar absències";
-boto.classList.add("btn", "btn-success", "mt-3");
+    boto.id = "btnEnviarAbsencies";
+    boto.textContent = "Enviar absències";
+    boto.classList.add("btn", "btn-success", "mt-3");
 
-boto.addEventListener("click", enviarAbsenciesSeleccionades);
+    boto.addEventListener("click", enviarAbsenciesSeleccionades);
 
-document.getElementById("divAlumnes").appendChild(boto);
+    document.getElementById("divAlumnes").appendChild(boto);
   }
 
   function crearGraellaAlumnesError() {
@@ -206,12 +215,12 @@ document.getElementById("divAlumnes").appendChild(boto);
   function clicarFranja(e) {
     const fila = Number(e.currentTarget.dataset.fila);
 
-    const alumne = alumnes.find(a => a.fila === fila);
+    const alumne = alumnes.find((a) => a.fila === fila);
 
     alumne.absent = !alumne.absent;
 
     iniciarAbsencia(alumne);
-    
+
     renderitzarAlumne(alumne);
   }
 
@@ -222,7 +231,6 @@ document.getElementById("divAlumnes").appendChild(boto);
 
     alumne.absent = true;
     alumne.horaInici = new Date();
-
   }
 
   function crearBarraProgres(cella) {
@@ -334,32 +342,25 @@ document.getElementById("divAlumnes").appendChild(boto);
   }
 
   function enviarAbsenciesSeleccionades() {
+    const dades = alumnes.filter((alumne) => alumne.absent);
 
-  const dades = alumnes.filter(alumne => alumne.absent);
-
-  if (dades.length === 0) {
-    crearNotificacioError(
-      "No hi ha cap alumne seleccionat.",
-      "Sense absències"
-    );
-    return;
-  }
-
-  google.script.run
-    .withSuccessHandler(() => {
-      crearNotificacioOK(
-        "Absències enviades correctament.",
-        "Tot correcte"
-      );
-    })
-    .withFailureHandler(error => {
+    if (dades.length === 0) {
       crearNotificacioError(
-        error.message,
-        "Error"
+        "No hi ha cap alumne seleccionat.",
+        "Sense absències",
       );
-    })
-    .enviarAbsencies(dades);
-}
+      return;
+    }
+
+    google.script.run
+      .withSuccessHandler(() => {
+        crearNotificacioOK("Absències enviades correctament.", "Tot correcte");
+      })
+      .withFailureHandler((error) => {
+        crearNotificacioError(error.message, "Error");
+      })
+      .enviarAbsencies(dades);
+  }
 
   function obtenirColorCSS(variableCSS) {
     return getComputedStyle(document.documentElement)
@@ -380,36 +381,28 @@ document.getElementById("divAlumnes").appendChild(boto);
   }
 
   function enviarAbsenciesSeleccionades() {
+    const absencies = alumnes.filter((alumne) => alumne.absent);
 
-  const absencies = alumnes.filter(alumne => alumne.absent);
-
-  if (absencies.length === 0) {
-    crearNotificacioError(
-      "No hi ha cap alumne seleccionat.",
-      "Sense absències"
-    );
-    return;
-  }
-
-  google.script.run
-    .withSuccessHandler(() => {
-
-      crearNotificacioOK(
-        `${absencies.length} absència/es enviada/es correctament.`,
-        "Procés finalitzat"
-      );
-
-    })
-    .withFailureHandler(error => {
-
+    if (absencies.length === 0) {
       crearNotificacioError(
-        error.message,
-        "Error enviant les absències"
+        "No hi ha cap alumne seleccionat.",
+        "Sense absències",
       );
+      return;
+    }
 
-    })
-    .enviarAbsencies(absencies);
-}
+    google.script.run
+      .withSuccessHandler(() => {
+        crearNotificacioOK(
+          `${absencies.length} absència/es enviada/es correctament.`,
+          "Procés finalitzat",
+        );
+      })
+      .withFailureHandler((error) => {
+        crearNotificacioError(error.message, "Error enviant les absències");
+      })
+      .enviarAbsencies(absencies);
+  }
 
   function crearNotificacio(missatge, titol) {
     document.getElementById("missatgeNotificacio").textContent = missatge;
@@ -494,6 +487,16 @@ document.getElementById("divAlumnes").appendChild(boto);
   function actualitzarRellotge() {
     const ara = new Date();
 
+    const segons = ara.getSeconds();
+    const minuts = ara.getMinutes() + segons / 60;
+    const hores = (ara.getHours() % 12) + minuts / 60;
+
+    agullaSegons.style.transform = `translateX(-50%) rotate(${segons * 6}deg)`;
+
+    agullaMinuts.style.transform = `translateX(-50%) rotate(${minuts * 6}deg)`;
+
+    agullaHora.style.transform = `translateX(-50%) rotate(${hores * 30}deg)`;
+
     const data = ara.toLocaleDateString("ca-ES", {
       weekday: "long",
       day: "2-digit",
@@ -501,18 +504,53 @@ document.getElementById("divAlumnes").appendChild(boto);
       year: "numeric",
     });
 
-    const hora = ara.toLocaleTimeString("ca-ES", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
+    const hora = ara.toLocaleTimeString("ca-ES");
 
-    document.getElementById("rellotge").textContent = `📅 ${data}   🕒 ${hora}`;
+    document.getElementById("dataHeader").textContent =
+      data.charAt(0).toUpperCase() + data.slice(1);
+
+    document.getElementById("horaHeader").textContent = hora;
   }
 
-  // Actualitza immediatament
-  actualitzarRellotge();
+  window.addEventListener("DOMContentLoaded", () => {
+    agullaHora = document.getElementById("agullaHora");
+    agullaMinuts = document.getElementById("agullaMinuts");
+    agullaSegons = document.getElementById("agullaSegons");
 
-  // Torna a actualitzar cada segon
-  setInterval(actualitzarRellotge, 1000);
+    console.log({
+      agullaHora,
+      agullaMinuts,
+      agullaSegons,
+    });
+
+    actualitzarRellotge();
+
+    setInterval(actualitzarRellotge, 1000);
+  });
+
+  ["mousemove", "mousedown", "keydown", "touchstart"].forEach((evento) => {
+    document.addEventListener(evento, reiniciarTemporitzador);
+  });
+
+  let temporitzador;
+
+  function reiniciarTemporitzador() {
+    clearTimeout(temporitzador);
+
+    amagarSalvapantalles();
+
+    temporitzador = setTimeout(
+      mostrarSalvapantalles,
+
+      60000,
+    );
+  }
+
+  function mostrarSalvapantalles() {
+    document.getElementById("salvapantalles").classList.add("actiu");
+  }
+
+  function amagarSalvapantalles() {
+    document.getElementById("salvapantalles").classList.remove("actiu");
+  }
 </script>
