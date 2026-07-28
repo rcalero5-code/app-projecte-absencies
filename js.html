@@ -40,6 +40,15 @@
     carregarAules();
   };
 
+  window.addEventListener("load", () => {
+    alert(
+      `innerWidth: ${window.innerWidth}
+      clientWidth: ${document.documentElement.clientWidth}
+      screen.width: ${screen.width}
+      match: ${matchMedia("(max-width:576px)").matches}`,
+    );
+  });
+
   function carregarAules() {
     google.script.run
       .withSuccessHandler(function (aules) {
@@ -192,15 +201,10 @@
     // Actualitzar la taula cada minut
     iniciarActualitzacioBarres();
 
-    const boto = document.createElement("button");
-
-    boto.id = "btnEnviarAbsencies";
-    boto.textContent = "Enviar absències";
-    boto.classList.add("btn", "btn-success", "mt-3");
-
-    boto.addEventListener("click", enviarAbsenciesSeleccionades);
-
-    document.getElementById("divAlumnes").appendChild(boto);
+    document.getElementById("btnEnviarAbsencies").style.display = "block";
+    document
+      .getElementById("btnEnviarAbsencies")
+      .addEventListener("click", enviarAbsenciesSeleccionades);
   }
 
   function crearGraellaAlumnesError() {
@@ -355,6 +359,9 @@
     google.script.run
       .withSuccessHandler(() => {
         crearNotificacioOK("Absències enviades correctament.", "Tot correcte");
+
+        document.getElementById("divAlumnes").innerHTML = "";
+        document.getElementById("btnEnviarAbsencies").style.display = "none";
       })
       .withFailureHandler((error) => {
         crearNotificacioError(error.message, "Error");
@@ -378,30 +385,6 @@
     }
 
     return obtenirColorCSS("--color-vermell-bug");
-  }
-
-  function enviarAbsenciesSeleccionades() {
-    const absencies = alumnes.filter((alumne) => alumne.absent);
-
-    if (absencies.length === 0) {
-      crearNotificacioError(
-        "No hi ha cap alumne seleccionat.",
-        "Sense absències",
-      );
-      return;
-    }
-
-    google.script.run
-      .withSuccessHandler(() => {
-        crearNotificacioOK(
-          `${absencies.length} absència/es enviada/es correctament.`,
-          "Procés finalitzat",
-        );
-      })
-      .withFailureHandler((error) => {
-        crearNotificacioError(error.message, "Error enviant les absències");
-      })
-      .enviarAbsencies(absencies);
   }
 
   function crearNotificacio(missatge, titol) {

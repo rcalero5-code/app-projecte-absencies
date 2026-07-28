@@ -1,44 +1,54 @@
 <main>
+  <!-- Botons -->
 
-    <!-- Botons -->
-
-    
-     <div class="row mb-3">
-
+  <div class="row mb-3">
     <div class="col-md-4">
-        <select id="aula" class="form-select">
-            <option value="">Selecciona una aula...</option>
-        </select>
+      <select id="aula" class="form-select">
+        <option value="">Selecciona una aula...</option>
+      </select>
     </div>
 
     <div class="col-md-2">
-        <button class="btn btn-success"
-                onclick="crearGraellaAlumnes()">
-            Mostrar alumnes
-        </button>
+      <button class="btn btn-success" onclick="crearGraellaAlumnes()">
+        Mostrar alumnes
+      </button>
     </div>
 
-</div>
+    <button id="btnEnviarAbsencies" class="btn btn-success mt-3" style="display: none">
+      Enviar absències
+    </button>
+  </div>
 
-<!-- Graella alumnes -->
-<div class="container col-12 col-lg-6 mb-4 d-flex justify-content-center" id="divAlumnes"></div>
+  <!-- Graella alumnes -->
+  <div
+    class="container col-12 col-lg-6 mb-4 d-flex justify-content-center"
+    id="divAlumnes"
+  ></div>
 
-
-
-<!-- Notificacions -->
-<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <!-- Notificacions -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3">
     <!-- toast  -->
-    <div id="notificacio" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
-        <!-- Header toast -->
-        <div class="toast-header p-0">
-            <div class="icona-notificacio"><i id="iconaNotificacio"></i></div>
-            <strong class="me-auto" id="titolNotificacio"></strong>
-            
-            <button type="button" class="btn-close m-2" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-        <!-- Body toast -->
-        <div class="toast-body" id="missatgeNotificacio"></div>
-    </div>
-</div>
+    <div
+      id="notificacio"
+      class="toast align-items-center text-white border-0"
+      role="alert"
+      aria-live="assertive"
+      aria-atomic="true"
+    >
+      <!-- Header toast -->
+      <div class="toast-header p-0">
+        <div class="icona-notificacio"><i id="iconaNotificacio"></i></div>
+        <strong class="me-auto" id="titolNotificacio"></strong>
 
+        <button
+          type="button"
+          class="btn-close m-2"
+          data-bs-dismiss="toast"
+          aria-label="Close"
+        ></button>
+      </div>
+      <!-- Body toast -->
+      <div class="toast-body" id="missatgeNotificacio"></div>
+    </div>
+  </div>
 </main>

@@ -23,7 +23,18 @@
   href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css"
 />
 
+<!-- Enllaç tipus de lletra -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
+  rel="stylesheet"
+/>
+
 <style>
+  * {
+    font-family: Montserrat;
+  }
   :root {
     --color-cyan-blau: #343a40;
     --color-magenta-rosa: #ff07d2;
@@ -128,29 +139,25 @@
     color: white;
   }
 
-  .salvapantalles{
+  .salvapantalles {
+    position: fixed;
 
-    position:fixed;
+    inset: 0;
 
-    inset:0;
+    display: none;
 
-    display:none;
+    justify-content: center;
 
-    justify-content:center;
+    align-items: center;
 
-    align-items:center;
+    background: #111;
 
-    background:#111;
+    z-index: 99999;
+  }
 
-    z-index:99999;
-
-}
-
-.salvapantalles.actiu{
-
-    display:flex;
-
-}
+  .salvapantalles.actiu {
+    display: flex;
+  }
 
   header {
     background-color: var(--color-cyan-blau); /* Color de fons del header */
@@ -185,29 +192,18 @@
 
   /* La transición hace que el cambio sea suave */
   tbody tr {
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease-in-out;
   }
-
-  /* Efecto al pasar el ratón */
-  /* tbody tr:hover {
-    background-color: #d1ecf1; /* Azul muy claro 
-} */
-
-  /* Efecto al hacer clic */
-  /* tbody tr:active {
-    background-color: #bee5eb;
-    transform: scale(0.99); /* Se encoge un 1% al hacer clic 
-} */
 
   /* Selecciona la fila (tr) SOLO SI tiene un td que está en hover */
   tr:has(td:hover) {
     background-color: #d1ecf1; /* Cambia el fondo de toda la fila */
+    transform: scale(0.99); /* Efecto de hundido en toda la fila */
   }
 
   /* Opcional: Si quieres que cambie al hacer clic (active) en un td */
   tr:has(td:active) {
     background-color: #bee5eb;
-    transform: scale(0.99); /* Efecto de hundido en toda la fila */
   }
 
   .barra-contenidor {
@@ -331,4 +327,47 @@
       transform: translate(24px, 0);
     }
   }
+
+  /* Canviar la resolució en cas de veure-ho en un mòbil */
+  /* @media (max-width: 576px) {
+    td {
+      height: 60px;
+      font-size: 1.2rem;
+    }
+
+    button {
+      font-size: 1.2rem;
+      padding: 12px;
+    }
+
+    .progress {
+      height: 28px;
+    }
+
+    .navbar {
+      font-size: 1.2rem;
+    }
+  }
+
+  @media (max-width: 576px) {
+    body {
+        background: red !important;
+    }
+} */
+
+ @media (max-width: 576px) {
+
+    header{
+        background:red !important;
+        font-size:2rem;
+    }
+
+    select{
+        font-size:2rem !important;
+    }
+
+    button{
+        font-size:2rem !important;
+    }
+}
 </style>

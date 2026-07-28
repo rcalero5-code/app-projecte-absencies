@@ -6,6 +6,10 @@ const ID_FULL_ABSENCIES = SpreadsheetApp.openById(
   "19Dupkk8Y_3oEjF3XvAfDrhCgOyWiH5F4kZX3mnVcmmA",
 );
 
+const FULL_ABSENCIES = SpreadsheetApp.openById(
+  "1teCIFUY-HBG7Xv3n0Cb3uJFX-pSoilPihXsKKGPlY00",
+);
+
 const CAPCALERA = [
   [
     "COGNOM",
@@ -39,6 +43,43 @@ function obtenirAlumnes(aula) {
 
 function obtenirAules() {
   return full.getSheets().map((f) => f.getName());
+}
+
+function obtenirLletraColumna(dia) {
+  const lletresColumna = [
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y",
+    "Z",
+    "AA",
+    "AB",
+    "AC",
+    "AD",
+    "AE",
+    "AF",
+    "AG",
+    "AH",
+    "AI",
+    "AJ",
+    "AK",
+    "AL",
+    "AM",
+  ];
+  return lletresColumna[dia - 1]; // Restem 1 perquè els dies comencen en 1, no en 0
 }
 
 function enviarAbsencies(absencies) {
@@ -75,6 +116,89 @@ function enviarAbsencies(absencies) {
 
     fulla.getRange(filaNova, 9).insertCheckboxes();
   });
+
+  enviarDadesAbsencies(absencies);
+}
+
+function enviarDadesAbsencies(absencies) {
+  absencies.forEach((alumne) => {
+    let nom = alumne.nom;
+    let cognom = alumne.cognom;
+    let aula = alumne.aula;
+    let absencia = alumne.absencia;
+    let justificacio = alumne.justificacio;
+    let comentari = alumne.comentari;
+    let dia = Utilities.formatDate(
+      new Date(),
+      Session.getScriptTimeZone(),
+      "d",
+    );
+    let mesNombre = Utilities.formatDate(
+      new Date(),
+      Session.getScriptTimeZone(),
+      "M",
+    );
+
+    let data = dia + "/" + mesNombre;
+    console.log("Data: ", data);
+
+    // Obrir la fulla de càlcul alumnes
+    let spreadsheetAlumnes = FULL_ABSENCIES;
+
+    if (spreadsheetAlumnes !== null) {
+      let sheetAlumnes = spreadsheetAlumnes.getSheetByName(aula);
+
+      if (!sheetAlumnes) {
+        console.log("No existeix la fulla " + aula);
+        return;
+      }
+      // Trobar la fila corresponent a l'alumne
+      const dades = sheetAlumnes.getDataRange().getValues();
+
+      let filaAlumne = -1;
+
+      for (let i = 3; i < dades.length; i++) {
+        if (dades[i][0] === cognom && dades[i][2] === nom) {
+          filaAlumne = i + 1;
+          break;
+        }
+      }
+
+      if (filaAlumne > 0) {
+        // Buscar la columna del dia
+        const dies = sheetAlumnes
+          .getRange(3, 1, 1, sheetAlumnes.getLastColumn())
+          .getValues()[0];
+
+        let columnaDia = -1;
+
+        for (let c = 0; c < dies.length; c++) {
+          if (Number(dies[c]) === Number(dia)) {
+            columnaDia = c + 1;
+            break;
+          }
+        }
+
+        if (columnaDia > 0) {
+          // Escriure els minuts d'absència
+          sheetAlumnes.getRange(filaAlumne, columnaDia).setValue(380);
+
+          // Afegir comentari si existeix
+          if (comentari) {
+            sheetAlumnes.getRange(filaAlumne, columnaDia).setNote(comentari);
+          }
+        } else {
+          console.log("No s'ha trobat la columna del dia.");
+        }
+      } else {
+        console.log("No s'ha trobat l'alumne.");
+      }
+    }
+  });
+}
+
+function obtenirAbsenciaColumna(absencia, justificacio) {
+  return justificacio === "si" ? "J" : ""; //Operador Ternari
 }
 
 function crearFullaDia(full, dia) {
