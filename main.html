@@ -1,7 +1,7 @@
 <main>
   <!-- Botons -->
 
-  <div class="row mb-3">
+  <div class="row mb-3 align-items-end">
     <div class="col-md-4">
       <select id="aula" class="form-select">
         <option value="">Selecciona una aula...</option>
@@ -9,21 +9,192 @@
     </div>
 
     <div class="col-md-2">
-      <button class="btn btn-success" onclick="crearGraellaAlumnes()">
+      <button class="btn btn-success w-100" onclick="crearGraellaAlumnes()">
         Mostrar alumnes
       </button>
     </div>
 
-    <button id="btnEnviarAbsencies" class="btn btn-success mt-3" style="display: none">
-      Enviar absències
-    </button>
+    <div class="col-md-2">
+      <button id="btnEntrada" class="btn btn-primary w-100">
+        <i class="bi bi-box-arrow-in-right"></i>
+        Entrada
+      </button>
+    </div>
   </div>
+
+  <button
+    id="btnEnviarAbsencies"
+    class="btn btn-success mt-3"
+    style="display: none"
+  >
+    Enviar absències
+  </button>
 
   <!-- Graella alumnes -->
   <div
     class="container col-12 col-lg-6 mb-4 d-flex justify-content-center"
     id="divAlumnes"
   ></div>
+
+  <!-- Modal entrada -->
+  <div class="modal fade" id="modalEntrada" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title">
+            <i class="bi bi-box-arrow-in-right"></i>
+            Registre d'entrada
+          </h5>
+
+          <button
+            type="button"
+            class="btn-close btn-close-white"
+            data-bs-dismiss="modal"
+          ></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">
+              <strong>Curs</strong>
+            </label>
+
+            <select id="entradaCurs" class="form-select">
+              <option value="">Selecciona un curs...</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">
+              <strong>Alumne</strong>
+            </label>
+
+            <select id="entradaAlumne" class="form-select">
+              <option value="">Selecciona un alumne...</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label"
+              ><strong>Nom i cognoms de la persona assistent</strong></label
+            >
+        
+            <select id="entradaPersona" class="form-select">
+              <option value="">Selecciona un tutor...</option>
+            </select>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <label class="form-label"><strong>Data</strong></label>
+              <input id="entradaData" class="form-control" readonly />
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label"><strong>Hora</strong></label>
+              <input id="entradaHora" class="form-control" readonly />
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <label class="form-label">
+                <strong>Signatura</strong>
+            </label>
+
+            <canvas
+                id="canvasSignatura"
+                width="500"
+                height="100"
+                style="
+                border:2px dashed #999;
+                border-radius:8px;
+                width:100%;
+                height:100px;
+                background:white;
+                cursor:pointer;
+                ">
+            </canvas>
+
+            <small class="text-muted">
+                Clica sobre la signatura per obrir el panell de signatura.
+            </small>
+          </div>
+
+          <div class="modal fade" id="modalSignatura" tabindex="-1">
+
+  <div class="modal-dialog modal-fullscreen">
+
+    <div class="modal-content">
+
+      <div class="modal-header bg-success text-white">
+
+        <h5 class="modal-title">
+          Signatura
+        </h5>
+
+        <button
+          type="button"
+          class="btn-close btn-close-white"
+          data-bs-dismiss="modal">
+        </button>
+
+      </div>
+
+      <div class="modal-body d-flex justify-content-center align-items-center">
+
+        <canvas
+          id="canvasGran"
+          width="1200"
+          height="700"
+          style="
+            width:95%;
+            height:85%;
+            border:2px solid #555;
+            border-radius:10px;
+            background:white;
+          ">
+        </canvas>
+
+      </div>
+
+      <div class="modal-footer">
+
+        <button
+          id="btnNetejar"
+          class="btn btn-warning">
+
+          Netejar
+
+        </button>
+
+        <button
+          id="btnAcceptarSignatura"
+          class="btn btn-success">
+
+          Acceptar
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">
+            Cancel·lar
+          </button>
+
+          <button id="btnGuardarEntrada" class="btn btn-success">
+            Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Notificacions -->
   <div class="toast-container position-fixed bottom-0 end-0 p-3">

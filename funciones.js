@@ -1,4 +1,4 @@
-const full = SpreadsheetApp.openById(
+const FULL = SpreadsheetApp.openById(
   "1FzOhlhpPKt8nESIGZRkVAJF4ErkjYuYOcleWpskB_60",
 );
 
@@ -36,50 +36,82 @@ function obtenirDadesHTML(nom) {
 }
 
 function obtenirAlumnes(aula) {
-  const fulla = full.getSheetByName(aula);
+  const fulla = FULL.getSheetByName(aula);
   const alumnes = fulla.getDataRange().getValues();
   return alumnes;
 }
 
 function obtenirAules() {
-  return full.getSheets().map((f) => f.getName());
+  return FULL.getSheets().map((f) => f.getName());
 }
 
-function obtenirLletraColumna(dia) {
-  const lletresColumna = [
-    "I",
-    "J",
-    "K",
-    "L",
-    "M",
-    "N",
-    "O",
-    "P",
-    "Q",
-    "R",
-    "S",
-    "T",
-    "U",
-    "V",
-    "W",
-    "X",
-    "Y",
-    "Z",
-    "AA",
-    "AB",
-    "AC",
-    "AD",
-    "AE",
-    "AF",
-    "AG",
-    "AH",
-    "AI",
-    "AJ",
-    "AK",
-    "AL",
-    "AM",
-  ];
-  return lletresColumna[dia - 1]; // Restem 1 perquè els dies comencen en 1, no en 0
+function obtenirAlumnesAbsents(aula) {
+  const full = FULL_ABSENCIES.getSheetByName(aula);
+
+  if (!full) {
+    throw new Error("No existeix la fulla " + aula);
+  }
+
+  const dades = full.getDataRange().getValues();
+
+  // Dia d'avui
+  const dia = new Date().getDate();
+
+  // Buscar la columna del dia (fila 3)
+  let columnaDia = -1;
+
+  for (let c = 0; c < dades[2].length; c++) {
+    if (Number(dades[2][c]) === dia) {
+      columnaDia = c;
+      break;
+    }
+  }
+
+  if (columnaDia === -1) {
+    throw new Error("No s'ha trobat la columna del dia " + dia);
+  }
+
+  const alumnes = [];
+
+  // Les dades comencen a la fila 4
+  for (let i = 3; i < dades.length; i++) {
+    const absencia = dades[i][columnaDia];
+
+    if (absencia !== "") {
+      alumnes.push({
+        fila: i + 1,
+        cognom1: dades[i][0],
+        cognom2: dades[i][1],
+        nom: dades[i][2],
+      });
+    }
+  }
+
+  return alumnes;
+}
+
+function obtenirTutors(aula, fila) {
+  const fullAlumnes = FULL.getSheetByName(aula);
+
+  if (!fullAlumnes) {
+    throw new Error("No existeix la fulla " + aula);
+  }
+
+  const filaLlista = Number(fila) - 2;
+
+  Logger.log("Fila FULL_ABSENCIES: " + fila);
+  Logger.log("Fila LLISTA: " + filaLlista);
+
+  const dades = fullAlumnes
+    .getRange(filaLlista, 1, 1, fullAlumnes.getLastColumn())
+    .getValues()[0];
+
+  Logger.log(dades);
+
+  return {
+    tutor1: dades[5],
+    tutor2: dades[6],
+  };
 }
 
 function enviarAbsencies(absencies) {
