@@ -1,0 +1,100 @@
+<script>
+  let agullaHora;
+  let agullaMinuts;
+  let agullaSegons;
+
+  document.addEventListener("load", carregarAules);
+
+  window.addEventListener("load", () => {
+    alert(
+      `innerWidth: ${window.innerWidth}
+          clientWidth: ${document.documentElement.clientWidth}
+          screen.width: ${screen.width}
+          match: ${matchMedia("(max-width:576px)").matches}`,
+    );
+  });
+
+  document
+    .getElementById("btnEntrada")
+    .addEventListener("click", obrirModalEntrada);
+
+  document
+    .getElementById("entradaCurs")
+    .addEventListener("change", carregarAlumnesAbsents);
+
+  document
+    .getElementById("entradaAlumne")
+    .addEventListener("change", carregarTutors);
+
+  const canvas = document.getElementById("canvasGran");
+
+  const ctx = canvas.getContext("2d");
+
+  let dibuixant = false,
+    difX = 0,
+    difY = 0;
+
+  canvas.addEventListener("pointerdown", iniciarSignatura);
+
+  canvas.addEventListener("pointermove", dibuixarSignatura);
+
+  // Este evento detecta cuando sueltas el botón del ratón
+  canvas.addEventListener("pointerup", acabarSignatura);
+
+  canvas.addEventListener("pointerleave", acabarSignatura);
+
+  document.getElementById("canvasSignatura").addEventListener("click", () => {
+    const modal = new bootstrap.Modal(
+      document.getElementById("modalSignatura"),
+    );
+
+    modal.show();
+  });
+
+  document.getElementById("btnNetejar").addEventListener("click", netejarCanvas);
+
+  document.getElementById("btnFoto").addEventListener("click", () => {
+    document.getElementById("justificant").click();
+  });
+
+  document
+    .getElementById("justificant")
+    .addEventListener("change", mostrarJustificant);
+
+  document
+    .getElementById("btnGuardarEntrada")
+    .addEventListener("click", guardarEntrada);
+
+  document
+    .getElementById("btnAcceptarSignatura")
+    .addEventListener("click", () => {
+      const canvasPetit = document.getElementById("canvasSignatura");
+
+      const ctxPetit = canvasPetit.getContext("2d");
+
+      ctxPetit.clearRect(0, 0, canvasPetit.width, canvasPetit.height);
+
+      ctxPetit.drawImage(canvas, 0, 0, canvasPetit.width, canvasPetit.height);
+      // Tancar el modal
+      bootstrap.Modal.getInstance(
+        document.getElementById("modalSignatura"),
+      ).hide();
+    });
+
+  window.addEventListener("DOMContentLoaded", () => {
+    agullaHora = document.getElementById("agullaHora");
+    agullaMinuts = document.getElementById("agullaMinuts");
+    agullaSegons = document.getElementById("agullaSegons");
+
+    console.log({
+      agullaHora,
+      agullaMinuts,
+      agullaSegons,
+    });
+
+    actualitzarRellotge();
+
+    setInterval(actualitzarRellotge, 1000);
+  });
+
+</script>

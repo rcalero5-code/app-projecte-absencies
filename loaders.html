@@ -1,0 +1,28 @@
+<script>
+
+    function crearLoader(elementPare) {
+    eliminarLoader();
+    let loader = document.createElement("div");
+    loader.id = "loader";
+    loader.appendChild(document.createElement("div"));
+    loader.appendChild(document.createElement("div"));
+    loader.appendChild(document.createElement("div"));
+    loader.appendChild(document.createElement("div"));
+    return document.getElementById(elementPare).appendChild(loader);
+  }
+
+  function crearLoaderPunts(elementPare) {
+    let loader = crearLoader(elementPare);
+    loader.classList.add("lds-ellipsis");
+  }
+
+  function crearLoaderAnell(elementPare) {
+    let loader = crearLoader(elementPare);
+    loader.classList.add("lds-dual-ring");
+  }
+
+  function eliminarLoader() {
+    document.getElementById("loader")?.remove(); // L'operador ?. elimina el loader només si existeix.
+  }
+  
+</script>

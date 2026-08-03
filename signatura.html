@@ -1,0 +1,62 @@
+<script>
+
+    function dibuixar(x1, y1, x2, y2) {
+    ctx.beginPath();
+
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "#000";
+    ctx.stroke();
+
+    ctx.closePath();
+  }
+
+  function iniciarSignatura(e) {
+    const pos = obtenirPosicioCanvas(e);
+
+    difX = pos.x;
+    difY = pos.y;
+    dibuixant = true;
+  }
+
+  function dibuixarSignatura(e) {
+    if (!dibuixant) return;
+
+    const pos = obtenirPosicioCanvas(e);
+
+    dibuixar(difX, difY, pos.x, pos.y);
+
+    difX = pos.x;
+    difY = pos.y;
+  }
+
+  function acabarSignatura() {
+    // Al soltar el click, cambiamos la variable a false para dejar de pintar
+    dibuixant = false;
+  }
+
+  function obtenirPosicioCanvas(e) {
+    const rect = canvas.getBoundingClientRect();
+
+    const escalaX = canvas.width / rect.width;
+    const escalaY = canvas.height / rect.height;
+
+    return {
+      x: (e.clientX - rect.left) * escalaX,
+      y: (e.clientY - rect.top) * escalaY,
+    };
+  }
+
+  function netejarCanvas() {
+
+  const canvas = document.getElementById("canvasSignatura");
+  const ctx = canvas.getContext("2d");
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  }
+
+</script>

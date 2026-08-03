@@ -96,6 +96,49 @@
             </div>
           </div>
 
+           <div class="mt-4">
+
+  <label class="form-label">
+    <strong>Justificant d'absència</strong>
+  </label>
+
+  <div class="card shadow-sm">
+
+    <div class="card-body text-center">
+
+      <div id="previewJustificant" class="mb-3">
+
+        <i class="bi bi-file-earmark-medical fs-1 text-secondary"></i>
+
+        <p class="text-muted mb-0">
+          Encara no s'ha adjuntat cap justificant
+        </p>
+
+      </div>
+
+      <button
+        id="btnFoto"
+        type="button"
+        class="btn btn-outline-primary"
+      >
+        <i class="bi bi-camera-fill"></i>
+        Fer fotografia / Adjuntar PDF
+      </button>
+
+      <input
+        type="file"
+        id="justificant"
+        accept="image/*,.pdf"
+        capture="environment"
+        hidden
+      />
+
+    </div>
+
+  </div>
+
+</div>
+
           <div class="mt-4">
             <label class="form-label">
                 <strong>Signatura</strong>
@@ -152,6 +195,7 @@
             border:2px solid #555;
             border-radius:10px;
             background:white;
+            touch-action: none;
           ">
         </canvas>
 

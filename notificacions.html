@@ -1,0 +1,66 @@
+<script>
+
+console.log("NOTIFICACIONS INICI");
+
+    function crearNotificacio(missatge, titol) {
+    document.getElementById("missatgeNotificacio").textContent = missatge;
+    document.getElementById("titolNotificacio").textContent = titol;
+    let elementNotificacio = document.getElementById("notificacio");
+    bootstrap.Toast.getOrCreateInstance(elementNotificacio).show();
+  }
+
+  function crearNotificacioOK(missatge, titol) {
+    crearNotificacio(missatge, titol);
+    crearIconaNotificacioOK();
+    crearColorNotificacio("--color-verd-lima");
+  }
+
+  function crearNotificacioError(missatge, titol) {
+    crearNotificacio(missatge, titol);
+    crearIconaNotificacioError();
+    crearColorNotificacio("--color-vermell-bug");
+  }
+
+  function crearNotificacioAdvertencia(missatge, titol) {
+    crearNotificacio(missatge, titol);
+    crearIconaNotificacioAdvertencia();
+    crearColorNotificacio("--color-groc-warning");
+  }
+
+  function crearIconaNotificacioOK() {
+    document.getElementById("iconaNotificacio").className = "";
+    document
+      .getElementById("iconaNotificacio")
+      .classList.add("bi", "bi-check2-circle");
+  }
+
+  function crearIconaNotificacioError() {
+    document.getElementById("iconaNotificacio").className = "";
+    document.getElementById("iconaNotificacio").classList.add("bi", "bi-bug");
+  }
+
+  function crearIconaNotificacioAdvertencia() {
+    document.getElementById("iconaNotificacio").className = "";
+    document
+      .getElementById("iconaNotificacio")
+      .classList.add("bi", "bi-exclamation-circle");
+  }
+
+  function crearColorNotificacio(color) {
+    let elementNotificacio = document.getElementById("notificacio");
+    elementNotificacio.style.backgroundColor = getComputedStyle(
+      document.documentElement,
+    ).getPropertyValue(color);
+  }
+
+console.log("NOTIFICACIONS FINAL");
+
+console.log("Tipus crearNotificacioOK:", typeof crearNotificacioOK);
+console.log("Tipus crearNotificacio:", typeof crearNotificacio);
+
+window.crearNotificacioOK = crearNotificacioOK;
+window.crearNotificacioError = crearNotificacioError;
+
+console.log("window.crearNotificacioOK =", typeof window.crearNotificacioOK);
+
+</script>

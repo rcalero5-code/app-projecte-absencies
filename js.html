@@ -1,8 +1,5 @@
 <script>
   let alumnes = [];
-  let agullaHora;
-  let agullaMinuts;
-  let agullaSegons;
 
   const FRANGES_HORARIES = [
     {
@@ -36,19 +33,6 @@
     },
   ];
 
-  window.onload = function () {
-    carregarAules();
-  };
-
-  window.addEventListener("load", () => {
-    alert(
-      `innerWidth: ${window.innerWidth}
-          clientWidth: ${document.documentElement.clientWidth}
-          screen.width: ${screen.width}
-          match: ${matchMedia("(max-width:576px)").matches}`,
-    );
-  });
-
   function carregarAules() {
     google.script.run
       .withSuccessHandler(function (aules) {
@@ -67,54 +51,14 @@
       .obtenirAules();
   }
 
-  document
-    .getElementById("btnEntrada")
-    .addEventListener("click", obrirModalEntrada);
+  function crearGraellaAlumnes(aula = document.getElementById("aula").value) {
+    if (!aula) {
+      const select = document.getElementById("aula");
 
-  document
-    .getElementById("entradaCurs")
-    .addEventListener("change", carregarAlumnesAbsents);
+      aula = select?.value || localStorage.getItem("ultimaAula");
+    }
 
-  document
-    .getElementById("entradaAlumne")
-    .addEventListener("change", carregarTutors);
-
-  document.getElementById("canvasSignatura").addEventListener("click", () => {
-    const modal = new bootstrap.Modal(
-      document.getElementById("modalSignatura"),
-    );
-
-    modal.show();
-  });
-
-  document.getElementById("btnNetejar").addEventListener("click", () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-  });
-
-  document
-    .getElementById("btnAcceptarSignatura")
-    .addEventListener("click", () => {
-      const canvasPetit = document.getElementById("canvasSignatura");
-
-      const ctxPetit = canvasPetit.getContext("2d");
-
-      ctxPetit.clearRect(0, 0, canvasPetit.width, canvasPetit.height);
-
-      ctxPetit.drawImage(
-        canvasGran,
-        0,
-        0,
-        canvasPetit.width,
-        canvasPetit.height,
-      );
-      // Tancar el modal
-      bootstrap.Modal.getInstance(
-        document.getElementById("modalSignatura"),
-      ).hide();
-    });
-
-  function crearGraellaAlumnes() {
-    let aula = document.getElementById("aula").value;
+    console.log("=== VERSIÓ NOVA 22:15 ===", aula);
 
     // Eliminar taula
     eliminarGraella();
@@ -123,7 +67,11 @@
     crearLoaderAnell("divAlumnes");
     google.script.run
       .withSuccessHandler(crearGraellaAlumnesCorrectament)
-      .withFailureHandler(crearGraellaAlumnesError)
+      .withFailureHandler((error) => {
+        console.error("ERROR DEL SERVIDOR");
+        console.error(error);
+        alert(error.message);
+      })
       .obtenirAlumnes(aula);
   }
 
@@ -155,9 +103,11 @@
 
     // Primera columna: Cognoms + Nom
     for (let i = 1; i < obj.length; i++) {
+      console.log("Afegint alumne", i);
+
       alumnes.push({
-        cognom: obj[i][0],
-        segonCognom: obj[i][1],
+        cognom1: obj[i][0],
+        cognom2: obj[i][1],
         nom: obj[i][2],
         aula: document.getElementById("aula").value,
         fila: i,
@@ -237,6 +187,10 @@
     // Agregem taula a la pàgina
     document.getElementById("divAlumnes").appendChild(taula);
 
+    console.log("FINAL crearGraellaAlumnesCorrectament");
+    console.log("Nombre alumnes:", alumnes.length);
+    console.log(alumnes);
+
     // Mostrar notificació de ok
     crearNotificacioOK(
       "mostrat l'alumnat de la classe correctament",
@@ -253,6 +207,9 @@
     document
       .getElementById("btnEnviarAbsencies")
       .addEventListener("click", enviarAbsenciesSeleccionades);
+
+    console.log("Alumnes carregats:", alumnes.length);
+    console.log(alumnes);
   }
 
   function crearGraellaAlumnesError() {
@@ -369,10 +326,177 @@
     barra.style.backgroundColor = obtenirColorBarra(percentatge);
   }
 
-  function crearBarraSiNoExisteix(alumne) {
-    const tdBarra = document.querySelector(
-      `.td-barra[data-aula="${alumne.aula}"][data-fila="${alumne.fila}"]`,
+  function validarDades(dades) {
+    if (!dades.aula) throw new Error("Selecciona un curs.");
+
+    if (!dades.fila) throw new Error("Selecciona un alumne.");
+
+    if (!dades.tutor)
+      throw new Error("Selecciona la persona que acompanya l'alumne.");
+  }
+
+  async function guardarSignatura() {
+    return document.getElementById("canvasGran").toDataURL("image/png");
+  }
+
+  async function guardarJustificant() {
+    const fitxer = document.getElementById("justificant").files[0];
+
+    if (!fitxer) return null;
+
+    return new Promise((resolve, reject) => {
+      const lector = new FileReader();
+
+      lector.onload = () => {
+        resolve({
+          nom: fitxer.name,
+          tipus: fitxer.type,
+          dades: lector.result,
+        });
+      };
+
+      lector.onerror = reject;
+
+      lector.readAsDataURL(fitxer);
+    });
+  }
+
+  async function guardarEntrada() {
+    console.log(">>> guardarEntrada inici");
+
+    console.log("1");
+
+    console.log("Variable global alumnes:", alumnes);
+
+    const dades = await obtenirDadesEntrada();
+
+    console.log("2", dades);
+
+    await validarDades(dades);
+
+    console.log("3");
+
+    dades.signatura = await guardarSignatura();
+
+    console.log("4");
+
+    dades.justificant = await guardarJustificant();
+
+    console.log("5");
+
+    await enviarEntrada(dades);
+
+    console.log("6");
+
+    actualitzarBarra(dades);
+
+    console.log("7");
+
+    // Guardem l'última aula vàlida
+    localStorage.setItem("ultimaAula", dades.aula);
+
+    // refrescarGraella(dades.aula);
+
+    console.log("8");
+
+    tancarModal();
+
+    console.log("9");
+
+    google.script.run
+      .withSuccessHandler(function (url) {
+        console.log("Document generat:", url);
+        crearNotificacioOK("Tot en ordre", "Document generat correctament");
+      })
+      .withFailureHandler(function (error) {
+        console.error(error);
+        crearNotificacioError(error.message, "Error generant el document");
+      })
+      .generarDocumentEntrada(dades);
+
+    crearNotificacioOK(
+      "L'entrada s'ha registrat correctament",
+      "ENTRADA REGISTRADA",
     );
+
+    netejarModalEntrada();
+  }
+
+  function netejarModalEntrada() {
+    document.getElementById("entradaCurs").selectedIndex = 0;
+    document.getElementById("entradaAlumne").selectedIndex = 0;
+    document.getElementById("entradaPersona").selectedIndex = 0;
+
+    document.getElementById("entradaData").value = "";
+    document.getElementById("entradaHora").value = "";
+
+    document.getElementById("justificant").value = "";
+
+    document.getElementById("previewJustificant").innerHTML = `
+    <i class="bi bi-file-earmark-medical fs-1 text-secondary"></i>
+    <p class="text-muted mb-0">
+      Encara no s'ha adjuntat cap justificant
+    </p>
+  `;
+
+    netejarCanvas();
+  }
+
+  async function enviarEntrada(dades) {
+    return new Promise((resolve, reject) => {
+      google.script.run
+        .withSuccessHandler(resolve)
+        .withFailureHandler((error) => {
+          console.error("ERROR SERVIDOR: ", error);
+          reject(error);
+        })
+        .desarEntrada(dades);
+    });
+  }
+
+  function actualitzarBarra(dades) {
+    const alumne = alumnes.find((a) => a.fila == dades.fila);
+
+    if (!alumne) return;
+
+    alumne.horaArribada = dades.hora;
+
+    renderitzarAlumne(alumne);
+  }
+
+  function refrescarGraella(aula) {
+    crearGraellaAlumnes(aula);
+  }
+
+  function tancarModal() {
+    bootstrap.Modal.getInstance(document.getElementById("modalEntrada")).hide();
+  }
+
+  function crearBarraSiNoExisteix(alumne) {
+    console.log("Aula:", alumne.aula);
+    console.log("Fila:", alumne.fila);
+
+    const selector = `.td-barra[data-aula="${alumne.aula}"][data-fila="${alumne.fila}"]`;
+
+    console.log(selector);
+
+    console.log("Taules:", document.querySelectorAll("#taulaAlumnes").length);
+    console.log("Barres:", document.querySelectorAll(".td-barra").length);
+    console.log(
+      [...document.querySelectorAll(".td-barra")].map((td) => ({
+        aula: td.dataset.aula,
+        fila: td.dataset.fila,
+      })),
+    );
+
+    const tdBarra = document.querySelector(selector);
+
+    if (!tdBarra) {
+      console.error("No s'ha trobat:", selector);
+      return null;
+    }
+
+    console.log(tdBarra);
 
     let barra = tdBarra.querySelector(".barra-progres");
 
@@ -447,6 +571,15 @@
     google.script.run
       .withSuccessHandler(omplirAlumnes)
       .obtenirAlumnesAbsents(aula);
+  }
+
+  function obtenirAlumne(aula, fila) {
+    return new Promise((resolve, reject) => {
+      google.script.run
+        .withSuccessHandler(resolve)
+        .withFailureHandler(reject)
+        .obtenirAlumne(aula, fila);
+    });
   }
 
   function omplirAlumnes(alumnes) {
@@ -525,82 +658,6 @@
     return obtenirColorCSS("--color-vermell-bug");
   }
 
-  function crearNotificacio(missatge, titol) {
-    document.getElementById("missatgeNotificacio").textContent = missatge;
-    document.getElementById("titolNotificacio").textContent = titol;
-    let elementNotificacio = document.getElementById("notificacio");
-    bootstrap.Toast.getOrCreateInstance(elementNotificacio).show();
-  }
-
-  function crearNotificacioOK(missatge, titol) {
-    crearNotificacio(missatge, titol);
-    crearIconaNotificacioOK();
-    crearColorNotificacio("--color-verd-lima");
-  }
-
-  function crearNotificacioError(missatge, titol) {
-    crearNotificacio(missatge, titol);
-    crearIconaNotificacioError();
-    crearColorNotificacio("--color-vermell-bug");
-  }
-
-  function crearNotificacioAdvertencia(missatge, titol) {
-    crearNotificacio(missatge, titol);
-    crearIconaNotificacioAdvertencia();
-    crearColorNotificacio("--color-groc-warning");
-  }
-
-  function crearIconaNotificacioOK() {
-    document.getElementById("iconaNotificacio").className = "";
-    document
-      .getElementById("iconaNotificacio")
-      .classList.add("bi", "bi-check2-circle");
-  }
-
-  function crearIconaNotificacioError() {
-    document.getElementById("iconaNotificacio").className = "";
-    document.getElementById("iconaNotificacio").classList.add("bi", "bi-bug");
-  }
-
-  function crearIconaNotificacioAdvertencia() {
-    document.getElementById("iconaNotificacio").className = "";
-    document
-      .getElementById("iconaNotificacio")
-      .classList.add("bi", "bi-exclamation-circle");
-  }
-
-  function crearColorNotificacio(color) {
-    let elementNotificacio = document.getElementById("notificacio");
-    elementNotificacio.style.backgroundColor = getComputedStyle(
-      document.documentElement,
-    ).getPropertyValue(color);
-  }
-
-  function crearLoader(elementPare) {
-    eliminarLoader();
-    let loader = document.createElement("div");
-    loader.id = "loader";
-    loader.appendChild(document.createElement("div"));
-    loader.appendChild(document.createElement("div"));
-    loader.appendChild(document.createElement("div"));
-    loader.appendChild(document.createElement("div"));
-    return document.getElementById(elementPare).appendChild(loader);
-  }
-
-  function crearLoaderPunts(elementPare) {
-    let loader = crearLoader(elementPare);
-    loader.classList.add("lds-ellipsis");
-  }
-
-  function crearLoaderAnell(elementPare) {
-    let loader = crearLoader(elementPare);
-    loader.classList.add("lds-dual-ring");
-  }
-
-  function eliminarLoader() {
-    document.getElementById("loader")?.remove(); // L'operador ?. elimina el loader només si existeix.
-  }
-
   function eliminarGraella() {
     document.getElementById("taulaAlumnes")?.remove(); // L'operador ?. elimina la taula només si existeix.
   }
@@ -633,22 +690,6 @@
     document.getElementById("horaHeader").textContent = hora;
   }
 
-  window.addEventListener("DOMContentLoaded", () => {
-    agullaHora = document.getElementById("agullaHora");
-    agullaMinuts = document.getElementById("agullaMinuts");
-    agullaSegons = document.getElementById("agullaSegons");
-
-    console.log({
-      agullaHora,
-      agullaMinuts,
-      agullaSegons,
-    });
-
-    actualitzarRellotge();
-
-    setInterval(actualitzarRellotge, 1000);
-  });
-
   ["mousemove", "mousedown", "keydown", "touchstart"].forEach((evento) => {
     document.addEventListener(evento, reiniciarTemporitzador);
   });
@@ -675,55 +716,64 @@
     document.getElementById("salvapantalles").classList.remove("actiu");
   }
 
-  const canvas = document.getElementById("canvasGran");
+  function mostrarJustificant(e) {
+    const fitxer = e.target.files[0];
 
-  const ctx = canvas.getContext("2d");
+    if (!fitxer) return;
 
-  let dibuixant, color, linewidth, difX, difY;
+    const preview = document.getElementById("previewJustificant");
 
-  canvas.addEventListener("mousedown", (e) => {
-    const rect = canvas.getBoundingClientRect();
+    preview.innerHTML = "";
 
-    difX = e.clientX - rect.left;
-    difY = e.clientY - rect.top;
-    dibuixant = true;
-    const color = "#000";
-    const linewidth = 2;
-  });
+    // És una imatge
+    if (fitxer.type.startsWith("image/")) {
+      const img = document.createElement("img");
 
-  canvas.addEventListener("mousemove", (e) => {
-    if (!dibuixant) return;
+      img.src = URL.createObjectURL(fitxer);
 
-    const rect = canvas.getBoundingClientRect();
+      img.className = "img-fluid rounded shadow";
 
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+      img.style.maxHeight = "220px";
 
-    ctx.beginPath();
-    ctx.moveTo(difX, difY);
-    ctx.lineTo(x, y);
-    ctx.strokeStyle = "#000";
-    ctx.lineWidth = 2;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.stroke();
+      preview.appendChild(img);
+    }
 
-    difX = x;
-    difY = y;
-  });
+    // És un PDF
+    else {
+      preview.innerHTML = `<i class="bi bi-file-earmark-pdf-fill text-danger fs-1"></i>
 
-  // Este evento detecta cuando sueltas el botón del ratón
-  canvas.addEventListener("mouseup", () => {
-    ctx.closePath();
-    // Al soltar el click, cambiamos la variable a false para dejar de pintar
-    dibuixant = false;
-  });
+      <p class="mt-2">${fitxer.name}</p>`;
+    }
 
-  const dibujar = (x1, y1, x2, y2) => {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = linewidth;
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.stroke();
-  };
+    document.getElementById("btnFoto").innerHTML =
+      '<i class="bi bi-arrow-repeat"></i> Canviar justificant';
+  }
+
+  async function obtenirDadesEntrada() {
+    const aula = document.getElementById("entradaCurs").value;
+    const fila = Number(document.getElementById("entradaAlumne").value);
+
+    console.log("Entrant a obtenirDadesEntrada");
+    console.log(alumnes);
+
+    const alumne = await obtenirAlumne(aula, fila);
+
+    console.log("Alumne trobat:", alumne);
+
+    if (!alumne) {
+      throw new Error("No s'ha trobat l'alumne.");
+    }
+
+    return {
+      aula,
+      fila,
+      alumne: `${alumne.cognom1} ${alumne.cognom2}, ${alumne.nom}`,
+      cognom1: alumne.cognom1,
+      cognom2: alumne.cognom2,
+      nom: alumne.nom,
+      tutor: document.getElementById("entradaPersona").value,
+      data: document.getElementById("entradaData").value,
+      hora: document.getElementById("entradaHora").value
+    };
+  }
 </script>
