@@ -3,7 +3,7 @@
   let agullaMinuts;
   let agullaSegons;
 
-  document.addEventListener("load", carregarAules);
+  document.addEventListener("DOMContentLoaded", carregarAules);
 
   window.addEventListener("load", () => {
     alert(
@@ -51,7 +51,9 @@
     modal.show();
   });
 
-  document.getElementById("btnNetejar").addEventListener("click", netejarCanvas);
+  document
+    .getElementById("btnNetejar")
+    .addEventListener("click", netejarCanvas);
 
   document.getElementById("btnFoto").addEventListener("click", () => {
     document.getElementById("justificant").click();
@@ -65,9 +67,14 @@
     .getElementById("btnGuardarEntrada")
     .addEventListener("click", guardarEntrada);
 
+    console.log("Listener btnGuardarEntrada registrat");
+
   document
     .getElementById("btnAcceptarSignatura")
     .addEventListener("click", () => {
+
+        console.log("Canvas gran:", canvas.toDataURL().length);
+
       const canvasPetit = document.getElementById("canvasSignatura");
 
       const ctxPetit = canvasPetit.getContext("2d");
@@ -75,11 +82,18 @@
       ctxPetit.clearRect(0, 0, canvasPetit.width, canvasPetit.height);
 
       ctxPetit.drawImage(canvas, 0, 0, canvasPetit.width, canvasPetit.height);
+
+          console.log("Canvas petit:", canvasPetit.toDataURL().length);
+
       // Tancar el modal
       bootstrap.Modal.getInstance(
         document.getElementById("modalSignatura"),
       ).hide();
     });
+
+  document
+    .getElementById("modalEntrada")
+    .addEventListener("shown.bs.modal", netejarCanvas);
 
   window.addEventListener("DOMContentLoaded", () => {
     agullaHora = document.getElementById("agullaHora");
@@ -96,5 +110,4 @@
 
     setInterval(actualitzarRellotge, 1000);
   });
-
 </script>

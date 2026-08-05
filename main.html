@@ -30,11 +30,33 @@
     Enviar absències
   </button>
 
-  <!-- Graella alumnes -->
+  <!-- Contenidor principal de la vista de l'aula -->
+   <div id="contenidorAula">
+
+<!-- 1. BARRA DE PROGRÉS (Col·locar-ho AQUÍ) -->
+  <div id="contenidorProgres" class="mb-4">
+    <div class="d-flex justify-content-between mb-1">
+      <span id="textProgresAula" class="font-weight-bold">0/0 Alumnes presents</span>
+    </div>
+    <div class="progress" style="height: 20px;">
+      <div 
+        id="barraProgresAula" 
+        class="progress-bar progress-bar-striped progress-bar-animated" 
+        role="progressbar" 
+        style="width: 0%;" 
+        aria-valuenow="0" 
+        aria-valuemin="0" 
+        aria-valuemax="100">
+      </div>
+    </div>
+  </div>
+
+    <!-- Graella alumnes -->
   <div
     class="container col-12 col-lg-6 mb-4 d-flex justify-content-center"
     id="divAlumnes"
   ></div>
+   </div>
 
   <!-- Modal entrada -->
   <div class="modal fade" id="modalEntrada" tabindex="-1">

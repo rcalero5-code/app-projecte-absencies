@@ -191,22 +191,22 @@
 
   td:hover {
     transform: scale(1.15); /* Agranda el div un 15% */
-    color: var(--color-groc-warning); /* Cambia el texto a color amarillo */
-    text-shadow: 0px 0px 8px var(--color-gris-clar); /* Crea un brillo blanco en las letras */
+    color: var(--color-groc-warning); /* Canvia el text a color groc */
+    text-shadow: 0px 0px 8px var(--color-gris-clar); /* Crea una brillantor blanca en les lletres */
   }
 
-  /* La transición hace que el cambio sea suave */
+  /* La transició fa que el canvi sea suau */
   tbody tr {
     transition: background-color 0.3s ease-in-out;
   }
 
-  /* Selecciona la fila (tr) SOLO SI tiene un td que está en hover */
+  /* Sel·lecciona la fila (tr) SOL SI té un td que hi és en hover */
   tr:has(td:hover) {
-    background-color: #d1ecf1; /* Cambia el fondo de toda la fila */
-    transform: scale(0.99); /* Efecto de hundido en toda la fila */
+    background-color: #d1ecf1; /* Canvia el fons de tota la fila */
+    transform: scale(0.99); /* Efecte d'enfonsat en tota la fila */
   }
 
-  /* Opcional: Si quieres que cambie al hacer clic (active) en un td */
+  /* Canvia al fer clic (active) en un td */
   tr:has(td:active) {
     background-color: #bee5eb;
   }
@@ -238,6 +238,17 @@
     padding: 0.5rem;
     margin-left: 2px;
   }
+
+  /* Permet fer scroll horitzontal suau a la taula sense deformar la pantalla */
+    .table-responsive {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Millora la resposta al toc amb el dit */
+    td, .btn {
+      touch-action: manipulation;
+    }
 
   /* LOADERS ANELL */
 

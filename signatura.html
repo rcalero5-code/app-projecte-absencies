@@ -1,6 +1,5 @@
 <script>
-
-    function dibuixar(x1, y1, x2, y2) {
+  function dibuixar(x1, y1, x2, y2) {
     ctx.beginPath();
 
     ctx.moveTo(x1, y1);
@@ -51,12 +50,22 @@
   }
 
   function netejarCanvas() {
+    console.log("Netejant canvas");
 
-  const canvas = document.getElementById("canvasSignatura");
-  const ctx = canvas.getContext("2d");
+    // Canvas gran (on es dibuixa)
+    const canvasGran = document.getElementById("canvasGran");
+    const ctxGran = canvasGran.getContext("2d");
+    ctxGran.clearRect(0, 0, canvasGran.width, canvasGran.height);
+    ctxGran.beginPath();
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Canvas petit (previsualització)
+    const canvasPetit = document.getElementById("canvasSignatura");
+    const ctxPetit = canvasPetit.getContext("2d");
+    ctxPetit.clearRect(0, 0, canvasPetit.width, canvasPetit.height);
+    ctxPetit.beginPath();
 
+    dibuixant = false;
+    difX = 0;
+    difY = 0;
   }
-
 </script>
