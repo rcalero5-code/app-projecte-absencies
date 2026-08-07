@@ -14,17 +14,53 @@
     );
   });
 
-  document
-    .getElementById("btnEntrada")
-    .addEventListener("click", obrirModalEntrada);
+  // Listeners dels botons (amb funció de fletxa per esperar al clic)
+// document
+//   .getElementById("btnEntrada")
+//   .addEventListener("click", () => obrirModal("Entrada"));
+
+// document
+//   .getElementById("btnSortida")
+//   .addEventListener("click", () => obrirModal("Sortida"));
+
+
+  document.addEventListener("DOMContentLoaded", () => {
+    
+    // Listener per al botó d'Entrada
+    document
+      .getElementById("btnEntrada")
+      ?.addEventListener("click", () => {
+        console.log("Obrir modal Entrada");
+        obrirModal("Entrada")
+    });
+
+    // Listener per al botó de Sortida
+    document
+      .getElementById("btnSortida")
+      ?.addEventListener("click", () => {
+        console.log("Obrir modal Sortida");
+        obrirModal("Sortida")
+    });
+
+  });
+
+
+// Listeners dels selectors de curs (passant el tipus directament)
+document
+  .getElementById("entradaCurs")
+  .addEventListener("change", () => carregarAlumnesAbsentsPresents("Entrada"));
+
+document
+  .getElementById("sortidaCurs")
+  .addEventListener("change", () => carregarAlumnesAbsentsPresents("Sortida"));
 
   document
-    .getElementById("entradaCurs")
-    .addEventListener("change", carregarAlumnesAbsents);
+  .getElementById("entradaAlumne")
+  .addEventListener("change", () => carregarTutors("Entrada"));
 
-  document
-    .getElementById("entradaAlumne")
-    .addEventListener("change", carregarTutors);
+document
+  .getElementById("sortidaAlumne")
+  .addEventListener("change", () => carregarTutors("Sortida"));
 
   const canvas = document.getElementById("canvasGran");
 
@@ -64,10 +100,17 @@
     .addEventListener("change", mostrarJustificant);
 
   document
-    .getElementById("btnGuardarEntrada")
-    .addEventListener("click", guardarEntrada);
+  .getElementById("btnGuardarEntrada")
+  .addEventListener("click", () => guardarRegistre("Entrada"));
 
-    console.log("Listener btnGuardarEntrada registrat");
+  console.log("Listener btnGuardarEntrada registrat");
+
+document
+  .getElementById("btnGuardarSortida")
+  .addEventListener("click", () => guardarRegistre("Sortida"));
+
+  console.log("Listener btnGuardarSortida registrat");
+    
 
   document
     .getElementById("btnAcceptarSignatura")

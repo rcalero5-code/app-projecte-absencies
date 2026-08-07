@@ -1,6 +1,5 @@
 <main>
-  <!-- Botons -->
-
+  <!-- Botons principals -->
   <div class="row mb-3 align-items-end">
     <div class="col-md-4">
       <select id="aula" class="form-select">
@@ -16,91 +15,61 @@
 
     <div class="col-md-2">
       <button id="btnEntrada" class="btn btn-primary w-100">
-        <i class="bi bi-box-arrow-in-right"></i>
-        Entrada
+        <i class="bi bi-box-arrow-in-right"></i> Entrada
+      </button>
+    </div>
+
+    <div class="col-md-2">
+      <button id="btnSortida" class="btn btn-warning w-100">
+        <i class="bi bi-box-arrow-in-left"></i> Sortida
       </button>
     </div>
   </div>
 
-  <button
-    id="btnEnviarAbsencies"
-    class="btn btn-success mt-3"
-    style="display: none"
-  >
+  <button id="btnEnviarAbsencies" class="btn btn-success mt-3" style="display: none">
     Enviar absències
   </button>
 
   <!-- Contenidor principal de la vista de l'aula -->
-   <div id="contenidorAula">
-
-<!-- 1. BARRA DE PROGRÉS (Col·locar-ho AQUÍ) -->
-  <div id="contenidorProgres" class="mb-4">
-    <div class="d-flex justify-content-between mb-1">
-      <span id="textProgresAula" class="font-weight-bold">0/0 Alumnes presents</span>
-    </div>
-    <div class="progress" style="height: 20px;">
-      <div 
-        id="barraProgresAula" 
-        class="progress-bar progress-bar-striped progress-bar-animated" 
-        role="progressbar" 
-        style="width: 0%;" 
-        aria-valuenow="0" 
-        aria-valuemin="0" 
-        aria-valuemax="100">
+  <div id="contenidorAula">
+    <div id="contenidorProgres" class="mb-4">
+      <div class="d-flex justify-content-between mb-1">
+        <span id="textProgresAula" class="font-weight-bold"></span>
+      </div>
+      <div class="progress" style="height: 20px;">
+        <div id="barraProgresAula" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
       </div>
     </div>
+
+    <div class="container col-12 col-lg-6 mb-4 d-flex justify-content-center" id="divAlumnes"></div>
   </div>
 
-    <!-- Graella alumnes -->
-  <div
-    class="container col-12 col-lg-6 mb-4 d-flex justify-content-center"
-    id="divAlumnes"
-  ></div>
-   </div>
-
-  <!-- Modal entrada -->
+  <!-- Modal ENTRADA -->
   <div class="modal fade" id="modalEntrada" tabindex="-1">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header bg-success text-white">
-          <h5 class="modal-title">
-            <i class="bi bi-box-arrow-in-right"></i>
-            Registre d'entrada
-          </h5>
-
-          <button
-            type="button"
-            class="btn-close btn-close-white"
-            data-bs-dismiss="modal"
-          ></button>
+          <h5 class="modal-title"><i class="bi bi-box-arrow-in-right"></i> Registre d'entrada</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
 
         <div class="modal-body">
           <div class="mb-3">
-            <label class="form-label">
-              <strong>Curs</strong>
-            </label>
-
+            <label class="form-label"><strong>Curs</strong></label>
             <select id="entradaCurs" class="form-select">
               <option value="">Selecciona un curs...</option>
             </select>
           </div>
 
           <div class="mb-3">
-            <label class="form-label">
-              <strong>Alumne</strong>
-            </label>
-
+            <label class="form-label"><strong>Alumne</strong></label>
             <select id="entradaAlumne" class="form-select">
               <option value="">Selecciona un alumne...</option>
             </select>
           </div>
 
           <div class="mb-3">
-            <label class="form-label"
-              ><strong>Nom i cognoms de la persona assistent</strong></label
-            >
-        
+            <label class="form-label"><strong>Nom i cognoms de la persona assistent</strong></label>
             <select id="entradaPersona" class="form-select">
               <option value="">Selecciona un tutor...</option>
             </select>
@@ -111,180 +80,143 @@
               <label class="form-label"><strong>Data</strong></label>
               <input id="entradaData" class="form-control" readonly />
             </div>
-
             <div class="col-md-6">
               <label class="form-label"><strong>Hora</strong></label>
               <input id="entradaHora" class="form-control" readonly />
             </div>
           </div>
 
-           <div class="mt-4">
-
-  <label class="form-label">
-    <strong>Justificant d'absència</strong>
-  </label>
-
-  <div class="card shadow-sm">
-
-    <div class="card-body text-center">
-
-      <div id="previewJustificant" class="mb-3">
-
-        <i class="bi bi-file-earmark-medical fs-1 text-secondary"></i>
-
-        <p class="text-muted mb-0">
-          Encara no s'ha adjuntat cap justificant
-        </p>
-
-      </div>
-
-      <button
-        id="btnFoto"
-        type="button"
-        class="btn btn-outline-primary"
-      >
-        <i class="bi bi-camera-fill"></i>
-        Fer fotografia / Adjuntar PDF
-      </button>
-
-      <input
-        type="file"
-        id="justificant"
-        accept="image/*,.pdf"
-        capture="environment"
-        hidden
-      />
-
-    </div>
-
-  </div>
-
-</div>
-
           <div class="mt-4">
-            <label class="form-label">
-                <strong>Signatura</strong>
-            </label>
-
-            <canvas
-                id="canvasSignatura"
-                width="500"
-                height="100"
-                style="
-                border:2px dashed #999;
-                border-radius:8px;
-                width:100%;
-                height:100px;
-                background:white;
-                cursor:pointer;
-                ">
-            </canvas>
-
-            <small class="text-muted">
-                Clica sobre la signatura per obrir el panell de signatura.
-            </small>
+            <label class="form-label"><strong>Justificant d'absència</strong></label>
+            <div class="card shadow-sm">
+              <div class="card-body text-center">
+                <div id="entradaPreviewJustificant" class="mb-3">
+                  <i class="bi bi-file-earmark-medical fs-1 text-secondary"></i>
+                  <p class="text-muted mb-0">Encara no s'ha adjuntat cap justificant</p>
+                </div>
+                <button id="entradaBtnFoto" type="button" class="btn btn-outline-primary">
+                  <i class="bi bi-camera-fill"></i> Fer fotografia / Adjuntar PDF
+                </button>
+                <input type="file" id="entradaJustificant" accept="image/*,.pdf" capture="environment" hidden />
+              </div>
+            </div>
           </div>
 
-          <div class="modal fade" id="modalSignatura" tabindex="-1">
-
-  <div class="modal-dialog modal-fullscreen">
-
-    <div class="modal-content">
-
-      <div class="modal-header bg-success text-white">
-
-        <h5 class="modal-title">
-          Signatura
-        </h5>
-
-        <button
-          type="button"
-          class="btn-close btn-close-white"
-          data-bs-dismiss="modal">
-        </button>
-
-      </div>
-
-      <div class="modal-body d-flex justify-content-center align-items-center">
-
-        <canvas
-          id="canvasGran"
-          width="1200"
-          height="700"
-          style="
-            width:95%;
-            height:85%;
-            border:2px solid #555;
-            border-radius:10px;
-            background:white;
-            touch-action: none;
-          ">
-        </canvas>
-
-      </div>
-
-      <div class="modal-footer">
-
-        <button
-          id="btnNetejar"
-          class="btn btn-warning">
-
-          Netejar
-
-        </button>
-
-        <button
-          id="btnAcceptarSignatura"
-          class="btn btn-success">
-
-          Acceptar
-
-        </button>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</div>
+          <div class="mt-4">
+            <label class="form-label"><strong>Signatura</strong></label>
+            <canvas id="entradaCanvasSignatura" width="500" height="100" style="border:2px dashed #999; border-radius:8px; width:100%; height:100px; background:white; cursor:pointer;"></canvas>
+            <small class="text-muted">Clica sobre la signatura per obrir el panell de signatura.</small>
+          </div>
+        </div>
 
         <div class="modal-footer">
-          <button class="btn btn-secondary" data-bs-dismiss="modal">
-            Cancel·lar
-          </button>
-
-          <button id="btnGuardarEntrada" class="btn btn-success">
-            Guardar
-          </button>
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel·lar</button>
+          <button id="btnGuardarEntrada" class="btn btn-success">Guardar</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Notificacions -->
+  <!-- Modal SORTIDA -->
+  <div class="modal fade" id="modalSortida" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-warning text-dark">
+          <h5 class="modal-title"><i class="bi bi-box-arrow-left"></i> Registre de sortida</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label"><strong>Curs</strong></label>
+            <select id="sortidaCurs" class="form-select">
+              <option value="">Selecciona un curs...</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label"><strong>Alumne</strong></label>
+            <select id="sortidaAlumne" class="form-select">
+              <option value="">Selecciona un alumne...</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label"><strong>Nom i cognoms de la persona assistent</strong></label>
+            <select id="sortidaPersona" class="form-select">
+              <option value="">Selecciona un tutor...</option>
+            </select>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <label class="form-label"><strong>Data</strong></label>
+              <input id="sortidaData" class="form-control" readonly />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label"><strong>Hora</strong></label>
+              <input id="sortidaHora" class="form-control" readonly />
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <label class="form-label"><strong>Justificant d'absència</strong></label>
+            <div class="card shadow-sm">
+              <div class="card-body text-center">
+                <div id="sortidaPreviewJustificant" class="mb-3">
+                  <i class="bi bi-file-earmark-medical fs-1 text-secondary"></i>
+                  <p class="text-muted mb-0">Encara no s'ha adjuntat cap justificant</p>
+                </div>
+                <button id="sortidaBtnFoto" type="button" class="btn btn-outline-primary">
+                  <i class="bi bi-camera-fill"></i> Fer fotografia / Adjuntar PDF
+                </button>
+                <input type="file" id="sortidaJustificant" accept="image/*,.pdf" capture="environment" hidden />
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <label class="form-label"><strong>Signatura</strong></label>
+            <canvas id="sortidaCanvasSignatura" width="500" height="100" style="border:2px dashed #999; border-radius:8px; width:100%; height:100px; background:white; cursor:pointer;"></canvas>
+            <small class="text-muted">Clica sobre la signatura per obrir el panell de signatura.</small>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel·lar</button>
+          <button id="btnGuardarSortida" class="btn btn-warning">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Signatura Únic (Compartit per Entrada i Sortida) -->
+  <div class="modal fade" id="modalSignatura" tabindex="-1">
+    <div class="modal-dialog modal-fullscreen">
+      <div class="modal-content">
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title">Signatura</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body d-flex justify-content-center align-items-center">
+          <canvas id="canvasGran" width="1200" height="700" style="width: 95%; height: 85%; border: 2px solid #555; border-radius: 10px; background: white; touch-action: none;"></canvas>
+        </div>
+        <div class="modal-footer">
+          <button id="btnNetejar" class="btn btn-secondary">Netejar</button>
+          <button id="btnAcceptarSignatura" class="btn btn-primary">Acceptar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notificacions Toast -->
   <div class="toast-container position-fixed bottom-0 end-0 p-3">
-    <!-- toast  -->
-    <div
-      id="notificacio"
-      class="toast align-items-center text-white border-0"
-      role="alert"
-      aria-live="assertive"
-      aria-atomic="true"
-    >
-      <!-- Header toast -->
+    <div id="notificacio" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
       <div class="toast-header p-0">
         <div class="icona-notificacio"><i id="iconaNotificacio"></i></div>
         <strong class="me-auto" id="titolNotificacio"></strong>
-
-        <button
-          type="button"
-          class="btn-close m-2"
-          data-bs-dismiss="toast"
-          aria-label="Close"
-        ></button>
+        <button type="button" class="btn-close m-2" data-bs-dismiss="toast" aria-label="Close"></button>
       </div>
-      <!-- Body toast -->
       <div class="toast-body" id="missatgeNotificacio"></div>
     </div>
   </div>

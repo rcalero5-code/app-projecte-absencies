@@ -1,0 +1,341 @@
+<script>
+  async function obtenirDades(tipus) {
+    const t = tipus.toLowerCase();
+    const aula = document.getElementById(`${t}Curs`).value;
+    const fila = Number(document.getElementById(`${t}Alumne`).value);
+
+    const alumne = await obtenirAlumne(aula, fila);
+
+    if (!alumne) {
+      throw new Error(
+        crearNotificacioError("No s'ha trobat l'alumne.", "ERROR"),
+      );
+    }
+
+    return {
+      tipus,
+      aula,
+      fila,
+      alumne: `${alumne.cognom1} ${alumne.cognom2}, ${alumne.nom}`,
+      cognom1: alumne.cognom1,
+      cognom2: alumne.cognom2,
+      nom: alumne.nom,
+      tutor: document.getElementById(`${t}Persona`).value,
+      data: document.getElementById(`${t}Data`).value,
+      hora: document.getElementById(`${t}Hora`).value,
+    };
+  }
+
+  function netejarModal(tipus) {
+    const t = tipus.toLowerCase();
+    document.getElementById(`${t}Curs`).selectedIndex = 0;
+    document.getElementById(`${t}Alumne`).selectedIndex = 0;
+    document.getElementById(`${t}Persona`).selectedIndex = 0;
+
+    document.getElementById(`${t}Data`).value = "";
+    document.getElementById(`${t}Hora`).value = "";
+
+    document.getElementById("justificant").value = "";
+
+    document.getElementById("previewJustificant").innerHTML = `
+      <i class="bi bi-file-earmark-medical fs-1 text-secondary"></i>
+      <p class="text-muted mb-0">
+        Encara no s'ha adjuntat cap justificant
+      </p>
+    `;
+  }
+
+  async function enviarDades(dades, tipus) {
+    const funcioBackend = tipus === "Entrada" ? "desarEntrada" : "desarSortida";
+    return new Promise((resolve, reject) => {
+      google.script.run
+        .withSuccessHandler(function (resposta) {
+          // resposta conté { status: "success", url: urlPdf } o la URL directa
+          resolve(resposta);
+        })
+        .withFailureHandler((error) => {
+          crearNotificacioError(error, "ERROR SERVIDOR: ");
+          reject(error);
+        })
+        [funcioBackend](dades);
+    });
+  }
+
+  function carregarTutors(tipus) {
+    // Verificació per evitar errors si es rep un Event
+    if (typeof tipus !== "string") return;
+
+    const t = tipus.toLowerCase();
+    const aula = document.getElementById(`${t}Curs`).value;
+    const fila = document.getElementById(`${t}Alumne`).value;
+
+    // Si no s'ha seleccionat cap alumne o aula vàlida, no fem la petició
+    if (!aula || !fila) return;
+
+    google.script.run
+      .withSuccessHandler((alumne) => omplirTutors(alumne, tipus))
+      .obtenirTutors(aula, fila);
+  }
+
+  async function guardarRegistre(tipus) {
+    const boto =
+      document.getElementById(`btnGuardar${tipus}`) ||
+      document.getElementById("btnGuardar");
+
+    try {
+      const dades = await obtenirDades(tipus);
+
+      await validarDades(dades);
+
+      // 1. Desactivar botó i actiu el loader al modal
+      if (boto) boto.disabled = true;
+      crearLoaderAnell("previewJustificant");
+
+      // 2. Preparem el nom net (ex: "05-08-2026_Cognom1_Cognom2_Nom")
+      const dataNeta = dades.data.replaceAll("/", "-");
+      const nomAlumneNet = dades.alumne
+        .replaceAll(",", "")
+        .replaceAll(" ", "_");
+      const nomFitxerPersonalitzat = `${dataNeta}_${nomAlumneNet}`;
+
+      // 3. Guardem la signatura i el justificant passant-li el nom generat
+
+      dades.signatura = await guardarSignatura();
+
+      dades.justificant = await guardarJustificant(nomFitxerPersonalitzat);
+
+      const resposta = await enviarDades(dades, tipus);
+
+      // Obtenim l'URL del PDF que ens retorna el servidor
+      const urlPdf = resposta.url || resposta;
+
+      eliminarLoader();
+
+      crearNotificacioOK("Document generat correctament", "Tot en ordre");
+
+      actualitzarBarra(dades);
+
+      netejarModal(tipus);
+
+      // Guardem l'última aula vàlida
+      localStorage.setItem("ultimaAula", dades.aula);
+
+      // refrescarGraella(dades.aula);
+
+      tancarModal(tipus);
+    } catch (error) {
+      eliminarLoader();
+
+      crearNotificacioError(
+        error.message || error,
+        "Error generant el document",
+      );
+    } finally {
+      // Reactivem el botó un cop finalitzat el procés (tant si va bé com si falla)
+      if (boto) boto.disabled = false;
+    }
+  }
+
+  function tancarModal(tipus) {
+    bootstrap.Modal.getInstance(
+      document.getElementById(`modal${tipus}`),
+    ).hide();
+  }
+
+  function carregarAlumnesAbsentsPresents(tipus) {
+    const idSelectCurs = `${tipus.toLowerCase()}Curs`;
+    const selectCurs = document.getElementById(idSelectCurs);
+
+    if (!selectCurs || !selectCurs.value) return;
+
+    const aula = selectCurs.value;
+    const runner = google.script.run.withSuccessHandler((alumnes) =>
+      omplirAlumnes(alumnes, tipus),
+    );
+
+    // Triem quina funció del servidor cridar segons el tipus
+    if (tipus === "Entrada") {
+      runner.obtenirAlumnesAbsents(aula);
+    } else {
+      runner.obtenirAlumnesPresents(aula);
+    }
+  }
+
+  function validarDades(dades) {
+    if (!dades.aula) throw new Error("Selecciona un curs.");
+
+    if (!dades.fila) throw new Error("Selecciona un alumne.");
+
+    if (!dades.tutor)
+      throw new Error("Selecciona la persona que acompanya l'alumne.");
+  }
+
+  function omplirAlumnes(alumnes, tipus) {
+    // Genera "entradaAlumne" o "sortidaAlumne"
+    const idSelect = `${tipus.toLowerCase()}Alumne`;
+    const select = document.getElementById(idSelect);
+    if (!select) return;
+
+    select.innerHTML = '<option value="">Selecciona un alumne...</option>';
+
+    alumnes.forEach((alumne) => {
+      const option = document.createElement("option");
+      option.value = alumne.fila;
+      option.textContent = `${alumne.cognom1} ${alumne.cognom2}, ${alumne.nom}`;
+      select.appendChild(option);
+    });
+  }
+
+  function omplirTutors(alumne, tipus) {
+    const idSelect = `${tipus.toLowerCase()}Persona`;
+    const select = document.getElementById(idSelect);
+    if (!select) return;
+
+    select.innerHTML = '<option value="">Selecciona un tutor...</option>';
+
+    if (alumne.tutor1) {
+      select.add(new Option(alumne.tutor1, alumne.tutor1));
+    }
+
+    if (alumne.tutor2 && alumne.tutor2 !== alumne.tutor1) {
+      select.add(new Option(alumne.tutor2, alumne.tutor2));
+    }
+  }
+
+  function omplirDataHora(tipus) {
+    const ara = new Date();
+
+    // Data: dd/mm/yyyy
+    const data = ara.toLocaleDateString("ca-ES");
+
+    // Hora: hh:mm
+    const hora = ara.toLocaleTimeString("ca-ES", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    const t = tipus.toLowerCase();
+    document.getElementById(`${t}Data`).value = data;
+    document.getElementById(`${t}Hora`).value = hora;
+  }
+
+  function mostrarJustificant(e) {
+    const fitxer = e.target.files[0];
+
+    if (!fitxer) return;
+
+    const preview = document.getElementById("previewJustificant");
+
+    preview.innerHTML = "";
+
+    // És una imatge
+    if (fitxer.type.startsWith("image/")) {
+      const img = document.createElement("img");
+
+      img.src = URL.createObjectURL(fitxer);
+
+      img.className = "img-fluid rounded shadow";
+
+      img.style.maxHeight = "220px";
+
+      preview.appendChild(img);
+    }
+
+    // És un PDF
+    else {
+      preview.innerHTML = `<i class="bi bi-file-earmark-pdf-fill text-danger fs-1"></i>
+
+        <p class="mt-2">${fitxer.name}</p>`;
+    }
+
+    document.getElementById("btnFoto").innerHTML =
+      '<i class="bi bi-arrow-repeat"></i> Canviar justificant';
+  }
+
+  async function guardarJustificant(nomPersonalitzat) {
+    const fitxer = document.getElementById("justificant").files[0];
+
+    if (!fitxer) return null;
+
+    // Redueix la imatge a un màxim de 800px d'ample i 50% de qualitat
+    const justificant = await reduirMidaImatge(fitxer, 800, 0.5);
+
+    // Si hem passat un nom personalitzat, li assignem la nova etiqueta
+    if (justificant && nomPersonalitzat) {
+      const extensio = fitxer.type.startsWith("image/")
+        ? "jpg"
+        : fitxer.name.split(".").pop();
+
+      justificant.nom = `${nomPersonalitzat}.${extensio}`;
+    }
+
+    return justificant;
+  }
+
+  async function guardarSignatura() {
+    return document.getElementById("canvasGran").toDataURL("image/png");
+  }
+
+  function obrirModal(tipus) {
+    console.log("--- INICI OBRIR MODAL ---", tipus);
+    // Genera "modalEntrada" o "modalSortida"
+    const modalId = `modal${tipus.charAt(0).toUpperCase() + tipus.slice(1).toLowerCase()}`;
+    const modalElement = document.getElementById(modalId);
+    console.log("La variable modalElement " + modalElement);
+
+    console.log(
+      "ID buscat:",
+      modalId,
+      "| Element trobat:",
+      modalElement ? modalElement.id : "NULL",
+    );
+
+    if (!modalElement) {
+      console.error(
+        `No s'ha trobat cap contenidor amb ID '${modalId}' a l'HTML`,
+      );
+      return;
+    }
+
+    // Carregar les aules al select corresponent (entradaCurs o sortidaCurs)
+    google.script.run
+      .withSuccessHandler((aules) => carregarAulesModal(aules, tipus))
+      .obtenirAules();
+
+    // Actualitzar data i hora en temps real
+    try {
+      omplirDataHora(tipus);
+    } catch (e) {
+      console.warn("Error a omplirDataHora:", e);
+    }
+
+    // Mostrar el modal Bootstrap
+    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+    modal.show();
+  }
+
+  function carregarAulesModal(aules, tipus) {
+    const idSelect = `${tipus.toLowerCase()}Curs`; // troba "entradaCurs" o "sortidaCurs"
+    const select = document.getElementById(idSelect);
+
+    if (!select) return;
+
+    select.innerHTML = '<option value="">Selecciona un curs...</option>';
+    aules.forEach((aula) => {
+      const option = document.createElement("option");
+      option.value = aula;
+      option.textContent = aula;
+      select.appendChild(option);
+    });
+  }
+
+  function calcularPercentatgeMinuts(minuts) {
+    return Math.max(0, Math.min(100, (minuts * 100) / 380));
+  }
+
+  function renderitzarAlumne(alumne) {
+    const percentatge = calcularPercentatgeMinuts(alumne.minuts);
+
+    pintarBarra(alumne, calcularPercentatgeActual());
+  }
+</script>

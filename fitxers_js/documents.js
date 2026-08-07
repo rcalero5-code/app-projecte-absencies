@@ -2,9 +2,8 @@ function generarDocumentEntrada(dades) {
   const ID_PLANTILLA = "1a3dnY5J1vBT51bx1frg4iFgfIcYGkj1y9iCwgjHYttA";
   const ID_CARPETA = "1x3iY3aUgd5z2cykWIw2gca57Fj1jf-_-";
 
-  // Copiar plantilla
+  // 1. Obrim la còpia de la plantilla
   const carpeta = obtenirCarpetaAula(ID_CARPETA, dades.aula);
-
   const nomDocument = `${dades.cognom1} ${dades.cognom2}, ${dades.nom} - ${dades.data} ${dades.hora}`;
 
   const copia = DriveApp.getFileById(ID_PLANTILLA).makeCopy(
@@ -13,18 +12,11 @@ function generarDocumentEntrada(dades) {
   );
 
   const doc = DocumentApp.openById(copia.getId());
-
   const body = doc.getBody();
 
   dades.registre = obtenirSeguentRegistreEntrada();
 
-  Logger.log("data = " + dades.data);
-  Logger.log("hora = " + dades.hora);
-  Logger.log("nom = " + dades.nom);
-  Logger.log("cognom1 = " + dades.cognom1);
-  Logger.log("cognom2 = " + dades.cognom2);
-  Logger.log("alumne = " + dades.alumne);
-
+  // 2. Substituïm el text de les etiquetes normals
   body.replaceText("{{REGISTRE}}", dades.registre);
   body.replaceText("{{DATA}}", dades.data);
   body.replaceText("{{HORA}}", dades.hora);
@@ -33,24 +25,65 @@ function generarDocumentEntrada(dades) {
   body.replaceText("{{TUTOR}}", dades.tutor);
   body.replaceText("{{OBSERVACIONS}}", dades.observacions || "");
 
-  inserirSignatura(body, dades.signatura);
+  // 3. Inserim el logotip a la capçalera o cos
+  inserirLogotip(doc);
 
-  if (dades.justificant) {
-    inserirJustificant(body, dades.justificant, carpeta);
+  // 4. Inserim la signatura (mida adaptada)
+  if (dades.signatura) {
+    const trobat = body.findText("{{SIGNATURA}}") || body.findText("SIGNATURA");
+    if (trobat) {
+      const parrafSig = trobat.getElement().getParent().asParagraph();
+      body.replaceText("{{SIGNATURA}}", "");
+      const base64Sig = dades.signatura.includes(",")
+        ? dades.signatura.split(",")[1]
+        : dades.signatura;
+
+      const blobSig = Utilities.newBlob(
+        Utilities.base64Decode(base64Sig),
+        "image/png",
+        "signatura.png",
+      );
+      parrafSig.appendInlineImage(blobSig).setWidth(110).setHeight(45);
+    }
   }
 
-  inserirLogotip(body);
+  // 5. Inserim el justificant (mida adaptada)
+  if (dades.justificant && dades.justificant.dades) {
+    Logger.log("📷 Justificant rebut: " + dades.justificant.nom);
+    const trobat =
+      body.findText("{{JUSTIFICANT}}") || body.findText("JUSTIFICANT");
+    if (trobat) {
+      Logger.log("✅ Etiqueta {{JUSTIFICANT}} localitzada al document.");
+      const parrafJust = trobat.getElement().getParent().asParagraph();
+      body.replaceText("{{JUSTIFICANT}}", "");
 
+      // Extraiem les dades Base64
+      const base64Data = dades.justificant.dades.includes(",")
+        ? dades.justificant.dades.split(",")[1]
+        : dades.justificant.dades;
+
+      const blobJust = Utilities.newBlob(
+        Utilities.base64Decode(dades.justificant.dades.split(",")[1]),
+        dades.justificant.tipus,
+        dades.justificant.nom,
+      );
+      parrafJust.appendInlineImage(blobJust).setWidth(180);
+    } else {
+      Logger.log(
+        "⚠️ ERROR: No s'ha trobat el text {{JUSTIFICANT}} a la plantilla de Google Docs.",
+      );
+    }
+  } else {
+    Logger.log(
+      "ℹ️ No s'ha adjuntat cap cap fitxer de justificant a la petició.",
+    );
+  }
+
+  // 6. Desem i convertim a PDF
   doc.saveAndClose();
 
   const pdf = DriveApp.getFileById(doc.getId()).getAs(MimeType.PDF);
-
-  Logger.log(
-    `${dades.data}_${dades.hora}_${dades.aula}_${dades.cognom1}_${dades.nom}`,
-  );
-
   const nom = `${dades.data}_${dades.hora}_${dades.aula}_${dades.cognom1}_${dades.nom}_Entrada.pdf`;
-
   const fitxer = carpeta.createFile(pdf).setName(nom);
 
   // Esborrar la còpia temporal del document de text
@@ -62,11 +95,9 @@ function generarDocumentEntrada(dades) {
   }
 
   return fitxer.getUrl();
-
 }
 
 function inserirSignatura(body, base64) {
-
   Logger.log("Longitud base64: " + base64.length);
 
   const bytes = Utilities.base64Decode(base64.split(",")[1]);
@@ -89,7 +120,7 @@ function inserirSignatura(body, base64) {
 
   element.asText().setText("");
 
-  parraf.appendInlineImage(blob).setWidth(180).setHeight(70);
+  parraf.appendInlineImage(blob).setWidth(200);
 
   Logger.log("Imatge inserida");
 }
@@ -107,7 +138,7 @@ function inserirJustificant(body, justificant, carpeta) {
   if (tipus.startsWith("image/")) {
     const blob = Utilities.newBlob(bytes, tipus, justificant.nom);
 
-    body.appendImage(blob).setWidth(450);
+    body.appendImage(blob).setWidth(200);
 
     return;
   }
@@ -129,8 +160,12 @@ function inserirJustificant(body, justificant, carpeta) {
   body.appendParagraph("Tipus de fitxer no suportat.");
 }
 
-function inserirLogotip(body) {
-  const etiqueta = body.findText("{{LOGOTIP}}");
+function inserirLogotip(doc) {
+  // Buscar primer a la capçalera; si no n'hi ha, busca al cos
+  const header = doc.getHeader();
+  const seccio = header || doc.getBody();
+
+  const etiqueta = seccio.findText("{{LOGOTIP}}");
 
   if (!etiqueta) return;
 
@@ -142,11 +177,9 @@ function inserirLogotip(body) {
 
   // Descarreguem la imatge i la convertim en Blob
   if (typeof URL_LOGOTIP !== "undefined" && URL_LOGOTIP) {
-    
-  const blob = UrlFetchApp.fetch(URL_LOGOTIP).getBlob();
+    const blob = UrlFetchApp.fetch(URL_LOGOTIP).getBlob();
 
-  parraf.appendInlineImage(blob).setWidth(90).setHeight(90);
-
+    parraf.appendInlineImage(blob).setWidth(90).setHeight(90);
   }
 }
 
@@ -175,4 +208,3 @@ function obtenirSeguentRegistreEntrada() {
 
   return `REG_ENT_${CURS}_${String(comptador).padStart(3, "0")}`;
 }
-

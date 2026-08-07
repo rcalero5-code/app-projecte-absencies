@@ -134,13 +134,14 @@ function obtenirAlumnesAbsents(aula) {
         cognom1: dades[i][0],
         cognom2: dades[i][1],
         nom: dades[i][2],
-        minuts: Number(dades[i][columnaDia]) || 380
+        minuts: Number(dades[i][columnaDia]) || 380,
       });
     }
   }
 
   return alumnes;
 }
+
 
 function obtenirTutors(aula, fila) {
   const fullAlumnes = FULL.getSheetByName(aula);
@@ -249,7 +250,6 @@ function enviarDadesAbsencies(absencies) {
 }
 
 function actualitzarMinutsAbsencia(aula, fila) {
-
   const sheet = FULL_ABSENCIES.getSheetByName(aula);
 
   if (!sheet) {
@@ -258,9 +258,7 @@ function actualitzarMinutsAbsencia(aula, fila) {
 
   const dia = new Date().getDate();
 
-  const dies = sheet
-    .getRange(3, 1, 1, sheet.getLastColumn())
-    .getValues()[0];
+  const dies = sheet.getRange(3, 1, 1, sheet.getLastColumn()).getValues()[0];
 
   let columnaDia = -1;
 
@@ -284,7 +282,7 @@ function actualitzarMinutsAbsencia(aula, fila) {
 
   const minuts = Math.max(
     0,
-    Math.min(horaActual - HORA_INICI, HORA_FINAL - HORA_INICI)
+    Math.min(horaActual - HORA_INICI, HORA_FINAL - HORA_INICI),
   );
 
   sheet.getRange(fila, columnaDia).setValue(minuts);
@@ -293,10 +291,29 @@ function actualitzarMinutsAbsencia(aula, fila) {
 }
 
 function desarEntrada(dades) {
-  Logger.log("Processant registre d'entrada: " + JSON.stringify(dades));
-
   try {
-    // Generem el document PDF i obtenim la seva URL de Drive
+    // 1. Processar i desar el justificant si existeix
+    if (dades.justificant && dades.justificant.dades) {
+      const esImatge = dades.justificant.dades.includes("data:image");
+      const esPdf = dades.justificant.dades.includes("data:application/pdf");
+
+      const base64Clean =
+        dades.justificant.dades.split(",")[1] || dades.justificant.dades;
+      const mimeType = esImatge
+        ? "image/jpeg"
+        : esPdf
+          ? "application/pdf"
+          : "application/octet-stream";
+
+      const blob = Utilities.newBlob(
+        Utilities.base64Decode(base64Clean),
+        mimeType,
+        dades.justificant.nom,
+      );
+
+    }
+
+    // 2. Generar el document PDF (es fa SEMPRE, hi hagi justificant o no)
     const urlPdf = generarDocumentEntrada(dades);
     return { status: "success", url: urlPdf };
   } catch (error) {
@@ -345,9 +362,9 @@ function obtenirAlumne(aula, fila) {
 function obtenirDadesAulaAmbProgres(aula) {
   const alumnes = obtenirAlumnes(aula); // La teva funció existent
   const absents = obtenirAlumnesAbsents(aula); // Els absents d'avui
-  
+
   // Creem un conjunt (Set) de files d'alumnes absents per a una cerca ràpida
-  const filesAbsents = new Set(absents.map(a => Number(a.fila)));
+  const filesAbsents = new Set(absents.map((a) => Number(a.fila)));
 
   // Retornem la llista indicant quins alumnes ja tenen l'absència registrada
   return alumnes.slice(1).map((row, index) => {
@@ -359,7 +376,7 @@ function obtenirDadesAulaAmbProgres(aula) {
       nom: row[2],
       telefon1: row[3],
       telefon2: row[4],
-      isAbsent: filesAbsents.has(numFila)
+      isAbsent: filesAbsents.has(numFila),
     };
   });
 }
@@ -369,11 +386,12 @@ function obtenirDadesAulaAmbProgres(aula) {
  */
 function obtenirAlumnesAmbProgres(aula) {
   const fullaBase = FULL.getSheetByName(aula);
-  if (!fullaBase) throw crearNotificacioError(`No existeix l'aula ${aula}`, "ERROR");
-  
+  if (!fullaBase)
+    throw crearNotificacioError(`No existeix l'aula ${aula}`, "ERROR");
+
   const dadesAlumnes = fullaBase.getDataRange().getValues();
   const fullaAbs = FULL_ABSENCIES.getSheetByName(aula);
-  
+
   const diaAvui = new Date().getDate();
   const minutsTotalsJornada = 380; // De 8:15 a 14:35h
   const mapaAbsencies = {};
@@ -382,12 +400,12 @@ function obtenirAlumnesAmbProgres(aula) {
   if (fullaAbs) {
     const dadesAbs = fullaAbs.getDataRange().getValues();
     const diesFila = dadesAbs[2]; // La fila 3 conté els dies del mes
-    
+
     let colDia = -1;
     for (let c = 0; c < diesFila.length; c++) {
       const val = diesFila[c];
       // Permet detectar tant si la cel·la és un número com un objecte Data de Sheets
-      let diaVal = (val instanceof Date) ? val.getDate() : Number(val);
+      let diaVal = val instanceof Date ? val.getDate() : Number(val);
 
       if (diaVal === diaAvui) {
         colDia = c;
@@ -398,10 +416,16 @@ function obtenirAlumnesAmbProgres(aula) {
     if (colDia !== -1) {
       for (let i = 3; i < dadesAbs.length; i++) {
         // .trim() i .toLowerCase() per evitar fallades si hi ha espais amagats
-        const c1 = String(dadesAbs[i][0] || "").trim().toLowerCase();
-        const c2 = String(dadesAbs[i][1] || "").trim().toLowerCase();
-        const nom = String(dadesAbs[i][2] || "").trim().toLowerCase();
-        
+        const c1 = String(dadesAbs[i][0] || "")
+          .trim()
+          .toLowerCase();
+        const c2 = String(dadesAbs[i][1] || "")
+          .trim()
+          .toLowerCase();
+        const nom = String(dadesAbs[i][2] || "")
+          .trim()
+          .toLowerCase();
+
         const clau = `${c1}_${c2}_${nom}`;
         const val = dadesAbs[i][colDia];
         if (val !== "" && val !== null && val !== undefined) {
@@ -413,13 +437,22 @@ function obtenirAlumnesAmbProgres(aula) {
 
   // Fusionem la llista d'alumnes amb les absències registrades
   return dadesAlumnes.slice(1).map((row, index) => {
-    const c1 = String(row[0] || "").trim().toLowerCase();
-    const c2 = String(row[1] || "").trim().toLowerCase();
-    const nom = String(row[2] || "").trim().toLowerCase();
+    const c1 = String(row[0] || "")
+      .trim()
+      .toLowerCase();
+    const c2 = String(row[1] || "")
+      .trim()
+      .toLowerCase();
+    const nom = String(row[2] || "")
+      .trim()
+      .toLowerCase();
     const clau = `${c1}_${c2}_${nom}`;
 
     const minuts = mapaAbsencies[clau] || 0;
-    const percentatge = Math.min(100, Math.round((minuts / minutsTotalsJornada) * 100));
+    const percentatge = Math.min(
+      100,
+      Math.round((minuts / minutsTotalsJornada) * 100),
+    );
 
     return {
       fila: index + 1,
@@ -430,7 +463,26 @@ function obtenirAlumnesAmbProgres(aula) {
       telefon2: row[4],
       isAbsent: minuts > 0,
       minutsAbsencia: minuts,
-      percentatge: percentatge
+      percentatge: percentatge,
     };
   });
+}
+
+// Al fitxer Code.gs
+function obtenirAlumnesPerEstat(aula, tipus) {
+  if (tipus === "Entrada") {
+    return obtenirAlumnesAbsents(aula); // Crida a la teva funció actual d'absents
+  } else {
+    return obtenirAlumnesPresents(aula); // Crida a la teva funció de presents
+  }
+}
+
+
+function obtenirAlumnesPresents(aula, fila) {
+  const alumnes = obtenirAlumnes(aula, fila);
+  return obtenirPresentsPerAula(alumnes, aula);
+}
+
+function obtenirPresentsPerAula(llistaAlumnes, aulaEscollida) {
+  return llistaAlumnes.filter(alumne => alumne.aula === aulaEscollida && !alumne.absent);
 }
